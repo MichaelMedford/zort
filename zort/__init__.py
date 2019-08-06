@@ -32,7 +32,11 @@ if dataDir is None:
     """
     print(message)
     dataDir = input()
+    if dataDir == '':
+        print('ZTF_OBJ_DATA not set. Exiting...')
+        sys.exit()
     if dataDir == 'exit':
+        print('Exiting...')
         sys.exit()
 
 print('ZTF_OBJ_DATA set to %s' % dataDir)
