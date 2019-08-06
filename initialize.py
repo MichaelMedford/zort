@@ -10,9 +10,10 @@ import argparse
 import pickle
 import os
 
+dataDir = os.getenv('ZTF_OBJ_DATA')
 
 def gather_DR1_field_files(parallelFlag=False):
-    fis = glob.glob('field*.txt')
+    fis = glob.glob('%s/field*.txt' % dataDir)
     fis = [f for f in fis if
            not os.path.exists(f.replace('.txt', '.objects_completed'))]
     random.shuffle(fis)
@@ -24,7 +25,7 @@ def gather_DR1_field_files(parallelFlag=False):
 
 
 def gather_DR1_object_files(parallelFlag=False):
-    fis = glob.glob('field*.objects')
+    fis = glob.glob('%s/field*.objects' % dataDir)
     fis = [f for f in fis if
            not os.path.exists(f.replace('.objects', '.rcid_map'))]
     random.shuffle(fis)
