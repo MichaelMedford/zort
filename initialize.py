@@ -4,50 +4,42 @@ initialize.py
 """
 
 import glob
-import random
-from datetime import datetime
 import argparse
 import pickle
 import os
+from tqdm import tqdm
+from pathlib import Path
+import sys
+
+zortDir = '%s/zort' % Path(__file__).parent
+sys.path.append(zortDir)
+from parallel import parallel_process
 
 dataDir = os.getenv('ZTF_OBJ_DATA')
 
-def gather_DR1_field_files(parallelFlag=False):
+
+def gather_lightcurve_files():
     fis = glob.glob('%s/field*.txt' % dataDir)
-    fis = [f for f in fis if
-           not os.path.exists(f.replace('.txt', '.objects_completed'))]
-    random.shuffle(fis)
-
-    if parallelFlag:
-        fis.sort()
-
     return fis
 
 
-def gather_DR1_object_files(parallelFlag=False):
-    fis = glob.glob('%s/field*.objects' % dataDir)
-    fis = [f for f in fis if
-           not os.path.exists(f.replace('.objects', '.rcid_map'))]
-    random.shuffle(fis)
-
-    if parallelFlag:
-        fis.sort()
-
+def gather_source_files():
+    fis = glob.glob('%s/field*.sources' % dataDir)
     return fis
 
 
-def generate_object_file(DR1_file):
-    fileObj = open(DR1_file, 'r')
+def generate_sources_file(lightcurve_file):
+    f_in = open(lightcurve_file, 'r')
 
-    obj_keys = ['id', 'nepochs', 'filterid',
-                'fieldid', 'rcid', 'ra', 'dec', 'buffer_position']
+    source_keys = ['id', 'nepochs', 'filterid',
+                   'fieldid', 'rcid', 'ra', 'dec', 'buffer_position']
 
-    object_file = DR1_file.replace('.txt', '.objects')
-    with open(object_file, 'w') as f_out:
-        f_out.write('%s\n' % ','.join(obj_keys))
+    sources_file = lightcurve_file.replace('.txt', '.sources')
+    with open(sources_file, 'w') as f_out:
+        f_out.write('%s\n' % ','.join(source_keys))
 
         while True:
-            line = fileObj.readline()
+            line = f_in.readline()
 
             # Check for end of the file
             if not line:
@@ -60,39 +52,20 @@ def generate_object_file(DR1_file):
             data = line.replace('\n', '').split()[1:]
             data_str = ','.join(data)
 
-            buffer_position = fileObj.tell() - len(line)
+            buffer_position = f_in.tell() - len(line)
             f_out.write('%s,%i\n' % (data_str, buffer_position))
 
-    fileObj.close()
-
-    with open(object_file + '_completed', 'w') as f:
-        f.write('')
+    f_in.close()
 
 
-def generate_object_files(parallelFlag=False):
-    DR1_files = gather_DR1_field_files(parallelFlag=parallelFlag)
-
+def generate_sources_files(parallelFlag=False, n_procs=1):
+    lightcurve_files = gather_lightcurve_files()
+    print('Genearting sources files for %i lightcurve files' % len(lightcurve_files))
     if parallelFlag:
-        from mpi4py import MPI
-        comm = MPI.COMM_WORLD
-        rank = comm.rank
-        size = comm.size
-
-        my_DR1_files = []
-        idx = rank
-        while idx < len(DR1_files):
-            my_DR1_files.append(DR1_files[idx])
-            idx += size
+        parallel_process(lightcurve_files, generate_sources_file, n_jobs=n_procs)
     else:
-        rank = 0
-        my_DR1_files = DR1_files
-
-    for i, DR1_file in enumerate(my_DR1_files):
-        now = datetime.now()
-        print('%i) Generating object_files for %s (%i/%i) | %s' % (
-            rank, DR1_file, i, len(my_DR1_files),
-            now.strftime("%m/%d/%Y, %H:%M:%S")))
-        generate_object_file(DR1_file)
+        for lightcurve_file in tqdm(lightcurve_files):
+            generate_sources_file(lightcurve_file)
 
 
 def save_rcid_map(DR1_object_file, rcid_map):
@@ -116,9 +89,9 @@ def return_rcid_map_filesize(rcid_map):
     return rcid_map_filesize
 
 
-def generate_rcid_map(DR1_object_file):
-    fileObj = open(DR1_object_file, 'r')
-    _ = fileObj.readline()  # skip past the header
+def generate_rcid_map(sources_file):
+    f_in = open(sources_file, 'r')
+    _ = f_in.readline()  # skip past the header
 
     rcid, rcid_current = None, None
     filterid, filterid_current = None, None
@@ -128,14 +101,13 @@ def generate_rcid_map(DR1_object_file):
     rcid_map[2] = dict()
 
     while True:
-        line = fileObj.readline()
-        buffer_location_current = fileObj.tell() - len(line)
+        line = f_in.readline()
+        buffer_location_current = f_in.tell() - len(line)
 
         # Check for end of the file
         if not line:
             rcid_map[filterid_current][rcid_current] = (
                 buffer_location_start, buffer_location_current)
-            # print(return_rcid_map_size(rcid_map))
             break
 
         line_split = line.split(',')
@@ -144,7 +116,6 @@ def generate_rcid_map(DR1_object_file):
 
         # Initialize the rcid
         if rcid_current is None:
-            # print(return_rcid_map_size(rcid_map))
             buffer_location_start = buffer_location_current
             rcid_current = rcid
             filterid_current = filterid
@@ -153,46 +124,34 @@ def generate_rcid_map(DR1_object_file):
         if rcid != rcid_current:
             rcid_map[filterid_current][rcid_current] = (
                 buffer_location_start, buffer_location_current)
-            # print(return_rcid_map_size(rcid_map))
             buffer_location_start = buffer_location_current
             rcid_current = rcid
             filterid_current = filterid
 
-    fileObj.close()
+    f_in.close()
 
-    return rcid_map
+    rcid_map_file = sources_file.replace('.sources', '.rcid_map')
+    save_rcid_map(rcid_map_file, rcid_map)
 
 
-def generate_rcid_maps(parallelFlag=False):
-    DR1_object_files = gather_DR1_object_files(parallelFlag=parallelFlag)
-
+def generate_rcid_maps(parallelFlag=False, n_procs=1):
+    sources_files = gather_source_files()
+    print('Genearting rcid maps for %i lightcurve files' % len(sources_files))
     if parallelFlag:
-        from mpi4py import MPI
-        comm = MPI.COMM_WORLD
-        rank = comm.rank
-        size = comm.size
-
-        my_DR1_object_files = []
-        idx = rank
-        while idx < len(DR1_object_files):
-            my_DR1_object_files.append(DR1_object_files[idx])
-            idx += size
+        parallel_process(sources_files, generate_rcid_map, n_jobs=n_procs)
     else:
-        rank = 0
-        my_DR1_object_files = DR1_object_files
-
-    for i, DR1_object_file in enumerate(my_DR1_object_files):
-        now = datetime.now()
-        print('%i) Generating rcid_map for %s (%i/%i) | %s' % (
-            rank, DR1_object_file, i, len(my_DR1_object_files),
-            now.strftime("%m/%d/%Y, %H:%M:%S")))
-        rcid_map = generate_rcid_map(DR1_object_file)
-        save_rcid_map(DR1_object_file, rcid_map)
+        for sources_file in tqdm(sources_files):
+            generate_rcid_map(sources_file)
 
 
 def main():
     # Get arguments
     parser = argparse.ArgumentParser(description=__doc__)
+    arguments = parser.add_argument_group('arguments')
+    arguments.add_argument('--n_procs', type=int,
+                           default=1,
+                           help='Number of processors to assign to parallel tasks. '
+                                'Default 1.')
 
     parallelgroup = parser.add_mutually_exclusive_group()
     parallelgroup.add_argument('--single', dest='parallelFlag',
@@ -205,8 +164,8 @@ def main():
 
     args = parser.parse_args()
 
-    generate_object_files(parallelFlag=args.parallelFlag)
-    generate_rcid_maps(parallelFlag=args.parallelFlag)
+    generate_sources_files(parallelFlag=args.parallelFlag, n_procs=args.n_procs)
+    generate_rcid_maps(parallelFlag=args.parallelFlag, n_procs=args.n_procs)
 
 
 if __name__ == '__main__':

@@ -56,9 +56,7 @@ if dataFiles != sourceFiles:
     To generate object files either run:
     python {initializeFile}
     or
-    srun -n $N_CORES python {initializeFile} --parallel
-    or 
-    mpiexec -n $N_CORES python {initializeFile} --parallel
+    python {initializeFile} --parallel --n-procs=$N_PROCS
     """
     print(message)
     sys.exit()
