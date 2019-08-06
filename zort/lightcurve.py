@@ -7,6 +7,11 @@ from photometry import magnitudes_to_fluxes
 import numpy as np
 
 
+################################
+#                              #
+#  Lightcurve Class            #
+#                              #
+################################
 class Lightcurve:
 
     def __init__(self, filename, buffer_position, apply_mask=True):

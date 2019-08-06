@@ -10,6 +10,12 @@ import matplotlib.pyplot as plt
 from lightcurve import Lightcurve
 
 
+################################
+#                              #
+#  Source Class                #
+#                              #
+################################
+
 class Source:
 
     def __init__(self, filename, buffer_position):
