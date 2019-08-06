@@ -18,48 +18,56 @@ class Source:
         except AttributeError:
             self.filename = filename
         self.buffer_position = int(buffer_position)
-        self.objectid = None
-        self.nepochs = None
-        self.filterid = None
-        self.fieldid = None
-        self.rcid = None
-        self.ra = None
-        self.dec = None
+        params = self._load_params()
+        self.objectid = params['objectid']
+        self.nepochs = params['nepochs']
+        self.filterid = params['filterid']
+        self.fieldid = params['fieldid']
+        self.rcid = params['rcid']
+        self.ra = params['ra']
+        self.dec = params['dec']
+        self.color = self._return_filterid_color()
         self.lightcurve = None
         self.sibling = None
         self.rcid_map = None
-        self.color = None
         self.sibling_tol_as = 2.0
 
     def __repr__(self):
-        if self.objectid is None:
-            self.load_params()
-
-        # noinspection PyStringFormat
         title = 'ZTF Object %i\n' % self.objectid
         title += 'Filename: %s\n' % self.filename
         title += 'Buffer Position: %s\n' % self.buffer_position
-        title += 'Color: %s\n' % self.return_filterid_color()
+        title += 'Color: %s\n' % self.color
         title += 'Ra/Dec: (%.5f, %.5f)' % (self.ra, self.dec)
 
         return title
 
-    def load_params(self):
-        file = open(self.filename, 'r')
+    def _load_params(self):
+        try:
+            file = open(self.filename, 'r')
+        except FileNotFoundError as e:
+            print(e)
+            return None
+
         file.seek(self.buffer_position)
 
         line = file.readline()
         params = line.split()[1:]
 
-        self.objectid = int(params[0])
-        self.nepochs = int(params[1])
-        self.filterid = int(params[2])
-        self.fieldid = int(params[3])
-        self.rcid = int(params[4])
-        self.ra = float(params[5])
-        self.dec = float(params[6])
+        params_dict = dict()
+        params_dict['objectid'] = int(params[0])
+        params_dict['nepochs'] = int(params[1])
+        params_dict['filterid'] = int(params[2])
+        params_dict['fieldid'] = int(params[3])
+        params_dict['rcid'] = int(params[4])
+        params_dict['ra'] = float(params[5])
+        params_dict['dec'] = float(params[6])
+        return params_dict
 
-        self.color = self.return_filterid_color()
+    def _return_filterid_color(self):
+        if self.filterid == 1:
+            return 'g'
+        if self.filterid == 2:
+            return 'r'
 
     def load_rcid_map(self):
         rcid_map_filename = self.filename.replace('.txt', '.rcid_map')
@@ -68,12 +76,6 @@ class Source:
             return 1
 
         self.rcid_map = pickle.load(open(rcid_map_filename, 'rb'))
-
-    def return_filterid_color(self):
-        if self.filterid == 1:
-            return 'g'
-        if self.filterid == 2:
-            return 'r'
 
     def return_object_filename(self):
         object_filename = self.filename.replace('.txt', '.objects')
@@ -158,9 +160,6 @@ class Source:
             return 0
 
     def locate_sibling(self, attempt_to_load=True):
-        if self.objectid is None:
-            self.load_params()
-
         print('Locating sibling for ZTF Object %i' % self.objectid)
         print('-- Object location: %.5f, %.5f ...' % (self.ra, self.dec))
 
@@ -233,8 +232,6 @@ class Source:
             self.set_sibling(sibling_buffer_position)
 
     def plot_lightcurve(self):
-        if self.objectid is None:
-            self.load_params()
         if self.lightcurve is None:
             self.load_lightcurve()
 
@@ -254,8 +251,6 @@ class Source:
         plt.close(fig)
 
     def plot_lightcurves(self, insert_radius=30):
-        if self.objectid is None:
-            self.load_params()
         if self.lightcurve is None:
             self.load_lightcurve()
 
