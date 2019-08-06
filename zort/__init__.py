@@ -38,8 +38,7 @@ if dataDir is None:
     if dataDir == 'exit':
         print('Exiting...')
         sys.exit()
-
-print('ZTF_OBJ_DATA set to %s' % dataDir)
+    print('ZTF_OBJ_DATA set to %s' % dataDir)
 
 dataFiles = set(glob.glob('%s/field*txt' % dataDir))
 sourceFiles = set([f.replace('sources', 'txt') for f in glob.glob('%s/field*sources' % dataDir)])
