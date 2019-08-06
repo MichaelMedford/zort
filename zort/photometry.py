@@ -6,7 +6,7 @@ photometry.py
 import numpy as np
 
 
-def magnitudes_to_fluxes(m, sig_m, zero_point=22.):
+def magnitudes_to_fluxes(m, sig_m, zero_point=22.0):
     """
     Given the mean and the standard deviation of a magnitude,
     assumed to be normally distributed, and a reference magnitude m0, this
@@ -30,7 +30,7 @@ def magnitudes_to_fluxes(m, sig_m, zero_point=22.):
     return mu_F, sig_F
 
 
-def fluxes_to_magnitudes(F, sig_F, zero_point=22):
+def fluxes_to_magnitudes(F, sig_F, zero_point=22.0):
     """
     Does the same thing as `magnitudes_to_fluxes` except in reverse.
     Created by: Nathan Golovich <golovich1@llnl.gov>
