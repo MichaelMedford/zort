@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 """
 parallel.py
+A native python implementation of processing embaressingly parallel tasks using concurrent futures.
+These processes will also display progress bars.
 """
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -18,7 +20,7 @@ def parallel_process(array, function, n_jobs=16, use_kwargs=False, return_out=Fa
                 keyword arguments to function
         Returns:
             [function(array[0]), function(array[1]), ...]
-        Inspired by:
+        Function inspired by:
             http://danshiebler.com/2016-09-14-parallel-progress-bar/
     """
     # Assemble the workers
