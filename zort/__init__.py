@@ -43,7 +43,7 @@ if dataDir is None:
 dataFiles = set(glob.glob('%s/field*txt' % dataDir))
 sourceFiles = set([f.replace('sources', 'txt') for f in glob.glob('%s/field*sources' % dataDir)])
 if dataFiles != sourceFiles:
-    initializeFile = '%s/initalize.py' % parentDir
+    initializeFile = '%s/initialize.py' % parentDir
     message = f"""
     zort requires that all ZTF lightcurves on disk have a source file built 
     for faster data access. These source files do not appear to be in the 
