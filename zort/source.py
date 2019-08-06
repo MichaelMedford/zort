@@ -27,7 +27,7 @@ class Source:
         self.ra = params['ra']
         self.dec = params['dec']
         self.color = self._return_filterid_color()
-        self.lightcurve = None
+        self.lightcurve = self._load_lightcurve()
         self.sibling = None
         self.rcid_map = None
         self.sibling_tol_as = 2.0
@@ -85,8 +85,8 @@ class Source:
         sibling_filename = self.filename.replace('.txt', '.siblings')
         return sibling_filename
 
-    def load_lightcurve(self):
-        self.lightcurve = Lightcurve(self.filename, self.buffer_position)
+    def _load_lightcurve(self):
+        return Lightcurve(self.filename, self.buffer_position)
 
     def return_sibling_file_status(self):
         filename = self.return_sibling_filename()
@@ -232,9 +232,6 @@ class Source:
             self.set_sibling(sibling_buffer_position)
 
     def plot_lightcurve(self):
-        if self.lightcurve is None:
-            self.load_lightcurve()
-
         fig, ax = plt.subplots()
         ax.errorbar(self.lightcurve.hmjd, self.lightcurve.mag,
                     yerr=self.lightcurve.magerr,
@@ -251,9 +248,6 @@ class Source:
         plt.close(fig)
 
     def plot_lightcurves(self, insert_radius=30):
-        if self.lightcurve is None:
-            self.load_lightcurve()
-
         hmjd_min = np.min(self.lightcurve.hmjd) - 15
         hmjd_max = np.max(self.lightcurve.hmjd) + 15
 
