@@ -40,10 +40,9 @@ class Source:
 
     def __repr__(self):
         title = 'ZTF Object %i\n' % self.objectid
-        title += 'Filename: %s\n' % self.filename
-        title += 'Buffer Position: %s\n' % self.buffer_position
         title += 'Color: %s\n' % self.color
         title += 'Ra/Dec: (%.5f, %.5f)' % (self.ra, self.dec)
+        title += '%i Epochs' % self.lightcurve.nepochs
 
         return title
 
@@ -83,9 +82,9 @@ class Source:
 
         self.rcid_map = pickle.load(open(rcid_map_filename, 'rb'))
 
-    def return_object_filename(self):
-        object_filename = self.filename.replace('.txt', '.objects')
-        return object_filename
+    def return_sources_filename(self):
+        sources_filename = self.filename.replace('.txt', '.sources')
+        return sources_filename
 
     def return_sibling_filename(self):
         sibling_filename = self.filename.replace('.txt', '.siblings')
@@ -187,9 +186,9 @@ class Source:
             filterid = 1
         rcid = self.rcid
 
-        object_filename = self.return_object_filename()
-        if not os.path.exists(object_filename):
-            print('** objects file missing! **')
+        sources_filename = self.return_sources_filename()
+        if not os.path.exists(sources_filename):
+            print('** sources file missing! **')
             return 1
 
         try:
@@ -202,14 +201,14 @@ class Source:
         print('-- Searching between buffers %i and %i' % (
             buffer_start, buffer_end))
 
-        fileObj = open(object_filename, 'r')
-        fileObj.seek(buffer_start)
+        sources_fileobj = open(sources_filename, 'r')
+        sources_fileobj.seek(buffer_start)
 
         sibling_buffer_position = None
 
         while True:
-            line = fileObj.readline()
-            object_buffer_position = fileObj.tell()
+            line = sources_fileobj.readline()
+            object_buffer_position = sources_fileobj.tell()
 
             # Check for end of file
             if not line:
@@ -230,7 +229,7 @@ class Source:
                 sibling_buffer_position = data[-1]
                 break
 
-        fileObj.close()
+        sources_fileobj.close()
 
         if sibling_buffer_position is None:
             print('---- No sibling found')
