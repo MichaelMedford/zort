@@ -49,7 +49,9 @@ class Object:
         self.sibling_tol_as = 2.0
 
     def __repr__(self):
-        title = 'ZTF Object %i\n' % self.objectid
+        title = 'Filename: %s\n' % self.filename.split('/')[-1]
+        title += 'Buffer Position: %i\n' % self.buffer_position
+        title += 'Object ID: %i\n' % self.objectid
         title += 'Color: %s\n' % self.color
         title += 'Ra/Dec: (%.5f, %.5f)\n' % (self.ra, self.dec)
         title += '%i Epochs\n' % self.lightcurve.nepochs
