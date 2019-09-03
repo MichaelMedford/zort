@@ -27,8 +27,7 @@ class Lightcurve:
         self.object_id = object_id
         self.filename = filename
         self.buffer_position = buffer_position
-        data = self._load_lightcurve(filename, buffer_position,
-                                     apply_mask=apply_mask)
+        data = self._load_lightcurve(apply_mask=apply_mask)
         self.hmjd = data['hmjd']
         self.mag = data['mag']
         self.magerr = data['magerr']

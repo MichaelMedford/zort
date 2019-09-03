@@ -31,10 +31,7 @@ class Object:
     """
 
     def __init__(self, filename, buffer_position):
-        try:
-            self.filename = filename.decode()
-        except AttributeError:
-            self.filename = filename
+        self.filename = self._set_filename(filename)
         self.buffer_position = int(buffer_position)
         params = self._load_params()
         self.objectid = params['objectid']
@@ -58,6 +55,17 @@ class Object:
         title += '%i Epochs' % self.lightcurve.nepochs
 
         return title
+
+    def _set_filename(self, filename):
+        try:
+            filename = filename.decode()
+        except AttributeError:
+            filename = filename
+
+        if '/' not in filename:
+            filename = os.getenv('ZTF_LC_DATA') + '/' + filename
+
+        return filename
 
     def _load_params(self):
         # Attempt to open file containing the parameters
@@ -108,7 +116,7 @@ class Object:
         return sibling_filename
 
     def _load_lightcurve(self):
-        return Lightcurve(self.filename, self.buffer_position)
+        return Lightcurve(self.filename, self.buffer_position, self.objectid)
 
     def return_sibling_file_status(self):
         # Attempt to locate the sibling file for this object's file
