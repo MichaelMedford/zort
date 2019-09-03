@@ -44,7 +44,7 @@ class Lightcurve:
 
     def __repr__(self):
         title = 'Object ID: %s\n' % self.object_id
-        title += 'N_epochs: %i' % self.nepochs
+        title += 'N_epochs: %i\n' % self.nepochs
 
         return title
 

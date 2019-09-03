@@ -52,7 +52,7 @@ class Object:
         title = 'ZTF Object %i\n' % self.objectid
         title += 'Color: %s\n' % self.color
         title += 'Ra/Dec: (%.5f, %.5f)\n' % (self.ra, self.dec)
-        title += '%i Epochs' % self.lightcurve.nepochs
+        title += '%i Epochs\n' % self.lightcurve.nepochs
 
         return title
 
