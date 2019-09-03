@@ -45,7 +45,7 @@ def generate_sources_file(lightcurve_file):
             if not line:
                 break
 
-            # Only want to look at object lines
+            # Only want to look at source lines
             if not line.startswith('#'):
                 continue
 
@@ -68,8 +68,8 @@ def generate_sources_files(parallelFlag=False, n_procs=1):
             generate_sources_file(lightcurve_file)
 
 
-def save_rcid_map(DR1_object_file, rcid_map):
-    rcid_map_filename = DR1_object_file.replace('.objects', '.rcid_map')
+def save_rcid_map(DR1_source_file, rcid_map):
+    rcid_map_filename = DR1_source_file.replace('.sources', '.rcid_map')
     with open(rcid_map_filename, 'wb') as fileObj:
         pickle.dump(rcid_map, fileObj)
 
