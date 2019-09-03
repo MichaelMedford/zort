@@ -42,7 +42,8 @@ if dataDir is None:
         sys.exit()
     print('ZTF_LC_DATA set to %s' % dataDir)
 
-dataFiles = set(glob.glob('%s/field*txt' % dataDir))
+dataFiles = set([f for f in glob.glob('%s/field*txt' % dataDir)
+                 if 'obs' not in f])
 objectFiles = set([f.replace('objects', 'txt') for f in
                    glob.glob('%s/field*objects' % dataDir)])
 if dataFiles != objectFiles:
@@ -54,7 +55,9 @@ if dataFiles != objectFiles:
 
     Object files must be generated from the lightcurve files currently 
     located in ZTF_LC_DATA. This process will take many hours with a 
-    single processor and about one hour with 30 cores. 
+    single processor and about one hour with 30 cores.
+    
+    ZTF_LC_DATA currently set to {dataDir} 
 
     To generate object files either run:
     python {initializeFile}
