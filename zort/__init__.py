@@ -12,7 +12,7 @@ parentDir = Path(__file__).parent.parent
 __version__ = open('%s/VERSION' % parentDir).readline().strip()
 
 # The first time this script is called, you will be asked for the data directory of your ZTF lightcurves, as well
-# as be forced into generating sources files and rcid maps if they are not detected.
+# as be forced into generating object files and rcid maps if they are not detected.
 
 dataDir = os.getenv('ZTF_OBJ_DATA')
 if dataDir is None:
@@ -41,12 +41,12 @@ if dataDir is None:
     print('ZTF_OBJ_DATA set to %s' % dataDir)
 
 dataFiles = set(glob.glob('%s/field*txt' % dataDir))
-sourceFiles = set([f.replace('sources', 'txt') for f in glob.glob('%s/field*sources' % dataDir)])
-if dataFiles != sourceFiles:
+objectFiles = set([f.replace('objects', 'txt') for f in glob.glob('%s/field*objects' % dataDir)])
+if dataFiles != objectFiles:
     initializeFile = '%s/initialize.py' % parentDir
     message = f"""
-    zort requires that all ZTF lightcurves on disk have a source file built 
-    for faster data access. These source files do not appear to be in the 
+    zort requires that all ZTF lightcurves on disk have a object file built 
+    for faster data access. These object files do not appear to be in the 
     ZTF_OBJ_DATA folder.
 
     Object files must be generated from the lightcurve files currently 

@@ -23,20 +23,20 @@ def gather_lightcurve_files():
     return fis
 
 
-def gather_source_files():
-    fis = glob.glob('%s/field*.sources' % dataDir)
+def gather_object_files():
+    fis = glob.glob('%s/field*.objects' % dataDir)
     return fis
 
 
-def generate_sources_file(lightcurve_file):
+def generate_objects_file(lightcurve_file):
     f_in = open(lightcurve_file, 'r')
 
-    source_keys = ['id', 'nepochs', 'filterid',
+    object_keys = ['id', 'nepochs', 'filterid',
                    'fieldid', 'rcid', 'ra', 'dec', 'buffer_position']
 
-    sources_file = lightcurve_file.replace('.txt', '.sources')
-    with open(sources_file, 'w') as f_out:
-        f_out.write('%s\n' % ','.join(source_keys))
+    objects_file = lightcurve_file.replace('.txt', '.objects')
+    with open(objects_file, 'w') as f_out:
+        f_out.write('%s\n' % ','.join(object_keys))
 
         while True:
             line = f_in.readline()
@@ -45,7 +45,7 @@ def generate_sources_file(lightcurve_file):
             if not line:
                 break
 
-            # Only want to look at source lines
+            # Only want to look at object lines
             if not line.startswith('#'):
                 continue
 
@@ -58,18 +58,18 @@ def generate_sources_file(lightcurve_file):
     f_in.close()
 
 
-def generate_sources_files(parallelFlag=False, n_procs=1):
+def generate_objects_files(parallelFlag=False, n_procs=1):
     lightcurve_files = gather_lightcurve_files()
-    print('Genearting sources files for %i lightcurve files' % len(lightcurve_files))
+    print('Genearting objects files for %i lightcurve files' % len(lightcurve_files))
     if parallelFlag:
-        parallel_process(lightcurve_files, generate_sources_file, n_jobs=n_procs)
+        parallel_process(lightcurve_files, generate_objects_file, n_jobs=n_procs)
     else:
         for lightcurve_file in tqdm(lightcurve_files):
-            generate_sources_file(lightcurve_file)
+            generate_objects_file(lightcurve_file)
 
 
-def save_rcid_map(DR1_source_file, rcid_map):
-    rcid_map_filename = DR1_source_file.replace('.sources', '.rcid_map')
+def save_rcid_map(DR1_object_file, rcid_map):
+    rcid_map_filename = DR1_object_file.replace('.objects', '.rcid_map')
     with open(rcid_map_filename, 'wb') as fileObj:
         pickle.dump(rcid_map, fileObj)
 
@@ -89,8 +89,8 @@ def return_rcid_map_filesize(rcid_map):
     return rcid_map_filesize
 
 
-def generate_rcid_map(sources_file):
-    f_in = open(sources_file, 'r')
+def generate_rcid_map(objects_file):
+    f_in = open(objects_file, 'r')
     _ = f_in.readline()  # skip past the header
 
     rcid, rcid_current = None, None
@@ -130,18 +130,18 @@ def generate_rcid_map(sources_file):
 
     f_in.close()
 
-    rcid_map_file = sources_file.replace('.sources', '.rcid_map')
+    rcid_map_file = objects_file.replace('.objects', '.rcid_map')
     save_rcid_map(rcid_map_file, rcid_map)
 
 
 def generate_rcid_maps(parallelFlag=False, n_procs=1):
-    sources_files = gather_source_files()
-    print('Genearting rcid maps for %i lightcurve files' % len(sources_files))
+    objects_files = gather_object_files()
+    print('Genearting rcid maps for %i lightcurve files' % len(objects_files))
     if parallelFlag:
-        parallel_process(sources_files, generate_rcid_map, n_jobs=n_procs)
+        parallel_process(objects_files, generate_rcid_map, n_jobs=n_procs)
     else:
-        for sources_file in tqdm(sources_files):
-            generate_rcid_map(sources_file)
+        for objects_file in tqdm(objects_files):
+            generate_rcid_map(objects_file)
 
 
 def main():
@@ -164,7 +164,7 @@ def main():
 
     args = parser.parse_args()
 
-    generate_sources_files(parallelFlag=args.parallelFlag, n_procs=args.n_procs)
+    generate_objects_files(parallelFlag=args.parallelFlag, n_procs=args.n_procs)
     generate_rcid_maps(parallelFlag=args.parallelFlag, n_procs=args.n_procs)
 
 

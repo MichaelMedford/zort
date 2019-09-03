@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 """
-source.py
-Each ZTF source can be represented as an instance of the Source class, along with its metadata and lightcurve.
-Note that each ZTF source is only one color, with a different color of the same astrophysical object labelled as
-a different source. This class can find and save spatially coincident sources with the locate_sibling function.
+object.py
+Each ZTF object can be represented as an instance of the Object class, along with its metadata and lightcurve.
+Note that each ZTF object is only one color, with a different color of the same astrophysical object labelled as
+a different object. This class can find and save spatially coincident objects with the locate_sibling function.
 """
 import os
 import pickle
@@ -15,15 +15,15 @@ from zort.lightcurve import Lightcurve
 
 ################################
 #                              #
-#  Source Class                #
+#  Object Class                #
 #                              #
 ################################
 
-class Source:
+class Object:
     """
-    Each ZTF source can be represented as an instance of the Source class, along with its parameters and lightcurve.
-    Note that each ZTF source is only one color, with a different color of the same astrophysical object labelled as
-    a different source. This class can find and save spatially coincident sources with the locate_sibling function.
+    Each ZTF object can be represented as an instance of the Object class, along with its parameters and lightcurve.
+    Note that each ZTF object is only one color, with a different color of the same astrophysical object labelled as
+    a different object. This class can find and save spatially coincident objects with the locate_sibling function.
     """
 
     def __init__(self, filename, buffer_position):
@@ -44,7 +44,7 @@ class Source:
         self.lightcurve = self._load_lightcurve()
         self.sibling = None
         self.rcid_map = None
-        self.sibling_tol_as = 2.0  # Tolerance for finding source siblings, in units of arcseconds
+        self.sibling_tol_as = 2.0  # Tolerance for finding object siblings, in units of arcseconds
 
     def __repr__(self):
         title = 'ZTF Object %i\n' % self.objectid
@@ -62,7 +62,7 @@ class Source:
             print(e)
             return None
 
-        # Jump to the location of the source in the lightcurve file
+        # Jump to the location of the object in the lightcurve file
         file.seek(self.buffer_position)
 
         line = file.readline()
@@ -86,7 +86,7 @@ class Source:
             return 'r'
 
     def load_rcid_map(self):
-        # Attempt to locate the rcid map for this source's file
+        # Attempt to locate the rcid map for this object's file
         rcid_map_filename = self.filename.replace('.txt', '.rcid_map')
         if not os.path.exists(rcid_map_filename):
             print('** rcid_map missing! **')
@@ -94,9 +94,9 @@ class Source:
 
         self.rcid_map = pickle.load(open(rcid_map_filename, 'rb'))
 
-    def return_sources_filename(self):
-        sources_filename = self.filename.replace('.txt', '.sources')
-        return sources_filename
+    def return_objects_filename(self):
+        objects_filename = self.filename.replace('.txt', '.objects')
+        return objects_filename
 
     def return_sibling_filename(self):
         sibling_filename = self.filename.replace('.txt', '.siblings')
@@ -106,7 +106,7 @@ class Source:
         return Lightcurve(self.filename, self.buffer_position)
 
     def return_sibling_file_status(self):
-        # Attempt to locate the sibling file for this source's file
+        # Attempt to locate the sibling file for this object's file
         filename = self.return_sibling_filename()
         if not os.path.exists(filename):
             print('** sibling file missing! **')
@@ -115,7 +115,7 @@ class Source:
             return True
 
     def save_sibling(self):
-        # Can only save a sibling is one is already assigned to this source
+        # Can only save a sibling is one is already assigned to this object
         if self.sibling is None:
             print('** sibling not set! **')
             return 1
@@ -134,7 +134,7 @@ class Source:
         print('---- Sibling saved')
 
     def load_sibling(self):
-        # Attempt to locate the sibling file for this source's file
+        # Attempt to locate the sibling file for this object's file
         if not self.return_sibling_file_status():
             return 1
 
@@ -142,7 +142,7 @@ class Source:
 
         print('-- Loading sibling...')
 
-        # Loop through the sibling file until the source is located
+        # Loop through the sibling file until the object is located
         sibling_buffer_position = None
         for line in open(filename, 'r'):
             line_split = line.replace('\n', '').split(',')
@@ -154,14 +154,14 @@ class Source:
             print('-- Sibling could not be located')
             return 1
 
-        # Assign the sibling to its own source instance
-        self.sibling = Source(self.filename, sibling_buffer_position)
+        # Assign the sibling to its own object instance
+        self.sibling = Object(self.filename, sibling_buffer_position)
         print('-- Sibling loaded!')
         return 0
 
     def set_sibling(self, sibling_buffer_position):
-        # Assign the sibling to its own source instance
-        self.sibling = Source(self.filename, sibling_buffer_position)
+        # Assign the sibling to its own object instance
+        self.sibling = Object(self.filename, sibling_buffer_position)
 
         print('---- Sibling found at %.5f, %.5f !' % (
             self.sibling.ra, self.sibling.dec))
@@ -171,7 +171,7 @@ class Source:
         self.save_sibling()
 
     def test_sibling(self, data):
-        # See if the data is close enough to the source to be the source's sibling
+        # See if the data is close enough to the object to be the object's sibling
 
         # Tolerance is set in self.sibling_tol_as, in units of arcseconds
         tol_degree = self.sibling_tol_as / 3600.
@@ -184,7 +184,7 @@ class Source:
         if delta_dec > tol_degree:
             return 0
 
-        # Calculate the full spherical distance between the data and the source.
+        # Calculate the full spherical distance between the data and the object.
         delta_ra = (ra - self.ra) * np.cos(np.radians(self.dec))
         delta = np.sqrt(delta_dec ** 2. + delta_ra ** 2.)
 
@@ -217,9 +217,9 @@ class Source:
             filterid = 1
         rcid = self.rcid
 
-        sources_filename = self.return_sources_filename()
-        if not os.path.exists(sources_filename):
-            print('** sources file missing! **')
+        objects_filename = self.return_objects_filename()
+        if not os.path.exists(objects_filename):
+            print('** objects file missing! **')
             return 1
 
         try:
@@ -232,14 +232,14 @@ class Source:
         print('-- Searching between buffers %i and %i' % (
             buffer_start, buffer_end))
 
-        sources_fileobj = open(sources_filename, 'r')
-        sources_fileobj.seek(buffer_start)
+        objects_fileobj = open(objects_filename, 'r')
+        objects_fileobj.seek(buffer_start)
 
         sibling_buffer_position = None
 
         while True:
-            line = sources_fileobj.readline()
-            object_buffer_position = sources_fileobj.tell()
+            line = objects_fileobj.readline()
+            object_buffer_position = objects_fileobj.tell()
 
             # Check for end of file
             if not line:
@@ -260,7 +260,7 @@ class Source:
                 sibling_buffer_position = data[-1]
                 break
 
-        sources_fileobj.close()
+        objects_fileobj.close()
 
         if sibling_buffer_position is None:
             print('---- No sibling found')

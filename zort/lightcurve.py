@@ -1,8 +1,9 @@
 #! /usr/bin/env python
 """
 lightcurve.py
-The observations of a ZTF source make up its lightcurve, held in the Lightcurve class. Typically this class will be
-instantiated as an attribute of a Source class.
+The observations of a ZTF object make up its lightcurve, held in the
+Lightcurve class. Typically this class will be instantiated as an attribute of
+an Object class.
 """
 
 from zort.photometry import magnitudes_to_fluxes
@@ -14,10 +15,12 @@ import numpy as np
 #  Lightcurve Class            #
 #                              #
 ################################
+
 class Lightcurve:
     """
-    The observations of a ZTF source make up its lightcurve, held in the Lightcurve class.
-    Typically this class will be instantiated as an attribute of a Source class.
+    The observations of a ZTF object make up its lightcurve, held in the
+    Lightcurve class. Typically this class will be instantiated as an attribute
+    of an Object class.
     """
 
     def __init__(self, filename, buffer_position, object_id, apply_mask=True):
@@ -48,9 +51,10 @@ class Lightcurve:
 
     def _load_lightcurve(self, apply_mask=True):
         """
-        Loads the lightcurve from a lightcurve file, starting at the location of the source.
-        The default is to apply a mask to any observatinos with a 'carflag' != 0, following the
-        recommendation of the ZTF Public Data Release website.
+        Loads the lightcurve from a lightcurve file, starting at the location
+        of the object. The default is to apply a mask to any observatinos with
+        a 'carflag' != 0, following the recommendation of the ZTF Public Data
+        Release website.
         """
         # Attempt to open file containing the lightcurve
         try:
@@ -59,7 +63,7 @@ class Lightcurve:
             print(e)
             return None
 
-        # Jump to the location of the source in the lightcurve file
+        # Jump to the location of the object in the lightcurve file
         file.seek(self.buffer_position)
         next(file)
 
