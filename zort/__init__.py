@@ -8,7 +8,7 @@ import os
 import sys
 import glob
 
-parentDir = Path(__file__).parent.parent
+parentDir = Path(__file__).parent
 __version__ = open('%s/VERSION' % parentDir).readline().strip()
 
 # The first time this script is called, you will be asked for the data
