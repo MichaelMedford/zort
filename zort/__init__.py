@@ -62,7 +62,7 @@ if dataFiles != objectFiles:
     To generate object files either run:
     python {initializeFile}
     or
-    python {initializeFile} --parallel --n-procs=$N_PROCS
+    python {initializeFile} --parallel --n_procs=$N_PROCS
     """
     print(message)
     sys.exit()
