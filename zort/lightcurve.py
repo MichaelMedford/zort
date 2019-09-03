@@ -37,10 +37,10 @@ class Lightcurve:
         self.clrcoeff = data['clrcoeff']
         self.carflag = data['carflag']
         self.nepochs = float(len(self.mag))
-        self.mag_med = np.median(self.mag)
-        self.mag_std = np.std(self.mag)
-        self.flux_med = np.median(self.flux)
-        self.flux_std = np.std(self.flux)
+        self.mag_med = self._return_median(self.mag)
+        self.mag_std = self._return_std(self.mag)
+        self.flux_med = self._return_median(self.flux)
+        self.flux_std = self._return_std(self.flux)
 
     def __repr__(self):
         title = 'Object ID: %s\n' % self.object_id
@@ -89,3 +89,15 @@ class Lightcurve:
         data = data[cond]
 
         return data
+
+    def _return_median(self, data):
+        if len(data) == 0:
+            return None
+        else:
+            return np.median(data)
+
+    def _return_std(self, data):
+        if len(data) == 0:
+            return None
+        else:
+            return np.std(data)
