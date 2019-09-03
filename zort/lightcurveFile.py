@@ -20,42 +20,55 @@ class LightcurveFile:
     """
     ZTF objects are stored in lightcurve files. This class allows for
     iteration through a lightcurve file in order to inspect each object's
-    lightcurve. Filters can be applied to objects and/or lightcurves.
+    lightcurve. The user can select to start looping through the file at a
+    specific buffer position.
+
+    LightcurveFile should be used as an iterator to loop over all of the
+    objects in the lightcurve file. Here is an example for how to
+    (1) filter through the lightcurves in a lightcurve file and (2) recover
+    the lightcurves of objects that pass a customized filter.
+
+    The Object class (object.py) and the Lightcurve class (lightcurve.py) list
+    out the attributes that can be run through the filter. These attributes
+    include the object's number of epochs, filter, and sky location. Filters
+    will almost certainly want to filter ont he object's lightcurve, which
+    contains the observations dates, magnitudes and magnitude errors.
+
+    EXAMPLE:
+
+    filename = 'field000245_ra357.03053to5.26702_dec-27.96964to-20.4773.txt'
+
+    from zort.lightcurveFile import LightcurveFile
+    interesting_objects = []
+    for obj in LightcurveFile(filename, nepochs_cut=10):
+        if my_interesting_filter(obj):
+            interesting_objects.append(obj.buffer_position)
+
+    from zort.object import Object
+    for buffer_position in interesting_objects:
+        obj = Object(filename, buffer_position)
+        print(obj)
+        print(obj.lightcurve)
     """
 
-    def __init__(self, filename,
-                 nepochs_cut=None,
-                 filterid_filter=None,
-                 fieldid_filter=None,
-                 rcid_filter=None):
+    def __init__(self, filename, init_buffer_position=56):
         self.filename = self._set_filename(filename)
         self.objects_filename = self.return_objects_filename()
+        self.init_buffer_position = init_buffer_position
         self.objects_file = self.return_objects_file()
-        self.nepochs_cut = self._set_filter(nepochs_cut)
-        self.filterid_filter = self._set_filter(filterid_filter)
-        self.fieldid_filter = self._set_filter(fieldid_filter)
-        self.rcid_filter = self._set_filter(rcid_filter)
 
     def __iter__(self):
         return self
 
     def __next__(self):
         line = self.objects_file.readline()
-        if int(self._return_parsed_line(line)[-1]) >= 11028:
+        if line == '':
             raise StopIteration
-        if self.apply_filter(line):
-            return self.return_object(line)
         else:
-            return None
+            return self.return_object(line)
 
     def __exit__(self):
         self.objects_file.close()
-
-    def _set_filter(self, filter):
-        if filter is None:
-            return None
-        else:
-            return int(filter)
 
     def _return_parsed_line(self, line):
         return line.replace('\n', '').split(',')
@@ -77,33 +90,9 @@ class LightcurveFile:
 
     def return_objects_file(self):
         file = open(self.objects_filename, 'r')
-        _ = file.readline()
+        file.seek(self.init_buffer_position)
         return file
 
     def return_objects_filename(self):
         objects_filename = self.filename.replace('.txt', '.objects')
         return objects_filename
-
-    def apply_filter(self, line):
-
-        if self.nepochs_cut is not None:
-            nepochs = int(self._return_parsed_line(line)[1])
-            if nepochs < self.nepochs_cut:
-                return False
-
-        if self.filterid_filter is not None:
-            filterid = int(self._return_parsed_line(line)[2])
-            if filterid != self.filterid_filter:
-                return False
-
-        if self.fieldid_filter is not None:
-            fieldid = int(self._return_parsed_line(line)[3])
-            if fieldid != self.fieldid_filter:
-                return False
-
-        if self.rcid_filter is not None:
-            rcid = int(self._return_parsed_line(line)[4])
-            if rcid != self.rcid_filter:
-                return False
-
-        return True
