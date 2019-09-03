@@ -5,6 +5,7 @@ __init__.py
 
 from pathlib import Path
 import os
+import sys
 import glob
 
 parentDir = Path(__file__).parent.parent
@@ -35,10 +36,10 @@ if dataDir is None:
     dataDir = input('ZTF_OBJ_DATA = ')
     if dataDir == '':
         print('ZTF_OBJ_DATA not set. Exiting...')
-        os._exit(0)
+        sys.exit()
     if dataDir == 'exit':
         print('Exiting...')
-        os._exit(0)
+        sys.exit()
     print('ZTF_OBJ_DATA set to %s' % dataDir)
 
 dataFiles = set(glob.glob('%s/field*txt' % dataDir))
@@ -61,4 +62,4 @@ if dataFiles != objectFiles:
     python {initializeFile} --parallel --n-procs=$N_PROCS
     """
     print(message)
-    os._exit(0)
+    sys.exit()
