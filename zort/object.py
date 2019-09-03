@@ -378,7 +378,7 @@ class Object:
             ax[1][0].set_ylabel('Magnitude')
             ax[1][0].set_xlabel('Observation Date')
             ax[1][0].set_title('ZTF Object %i '
-                               '(%s band)' % (self.objectid,
+                               '(%s band)' % (self.sibling.objectid,
                                               self.sibling.color))
 
             hmjd_cond = (self.sibling.lightcurve.hmjd >= hmjd_min_insert) & \
