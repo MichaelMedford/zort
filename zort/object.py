@@ -1,28 +1,37 @@
 #! /usr/bin/env python
 """
-source.py
+object.py
+Each ZTF object can be represented as an instance of the Object class, along
+with its metadata and lightcurve. Note that each ZTF object is only one color,
+with a different color of the same astrophysical object labelled as a different
+object. This class can find and save spatially coincident objects with the
+locate_sibling function.
 """
 import os
 import pickle
 import numpy as np
 import portalocker as portalocker
 import matplotlib.pyplot as plt
-from lightcurve import Lightcurve
+from zort.lightcurve import Lightcurve
 
 
 ################################
 #                              #
-#  Source Class                #
+#  Object Class                #
 #                              #
 ################################
 
-class Source:
+class Object:
+    """
+    Each ZTF object can be represented as an instance of the Object class,
+    along with its parameters and lightcurve. Note that each ZTF object is only
+    one color, with a different color of the same astrophysical object
+    labelled as a different object. This class can find and save spatially
+    coincident objects with the locate_sibling function.
+    """
 
     def __init__(self, filename, buffer_position):
-        try:
-            self.filename = filename.decode()
-        except AttributeError:
-            self.filename = filename
+        self.filename = self._set_filename(filename)
         self.buffer_position = int(buffer_position)
         params = self._load_params()
         self.objectid = params['objectid']
@@ -36,24 +45,37 @@ class Source:
         self.lightcurve = self._load_lightcurve()
         self.sibling = None
         self.rcid_map = None
+        # Tolerance for finding object siblings, in units of arcseconds
         self.sibling_tol_as = 2.0
 
     def __repr__(self):
         title = 'ZTF Object %i\n' % self.objectid
-        title += 'Filename: %s\n' % self.filename
-        title += 'Buffer Position: %s\n' % self.buffer_position
         title += 'Color: %s\n' % self.color
         title += 'Ra/Dec: (%.5f, %.5f)' % (self.ra, self.dec)
+        title += '%i Epochs' % self.lightcurve.nepochs
 
         return title
 
+    def _set_filename(self, filename):
+        try:
+            filename = filename.decode()
+        except AttributeError:
+            filename = filename
+
+        if '/' not in filename:
+            filename = os.getenv('ZTF_LC_DATA') + '/' + filename
+
+        return filename
+
     def _load_params(self):
+        # Attempt to open file containing the parameters
         try:
             file = open(self.filename, 'r')
         except FileNotFoundError as e:
             print(e)
             return None
 
+        # Jump to the location of the object in the lightcurve file
         file.seek(self.buffer_position)
 
         line = file.readline()
@@ -70,12 +92,14 @@ class Source:
         return params_dict
 
     def _return_filterid_color(self):
+        # Defined by ZTF convention
         if self.filterid == 1:
             return 'g'
         if self.filterid == 2:
             return 'r'
 
     def load_rcid_map(self):
+        # Attempt to locate the rcid map for this object's file
         rcid_map_filename = self.filename.replace('.txt', '.rcid_map')
         if not os.path.exists(rcid_map_filename):
             print('** rcid_map missing! **')
@@ -83,18 +107,19 @@ class Source:
 
         self.rcid_map = pickle.load(open(rcid_map_filename, 'rb'))
 
-    def return_object_filename(self):
-        object_filename = self.filename.replace('.txt', '.objects')
-        return object_filename
+    def return_objects_filename(self):
+        objects_filename = self.filename.replace('.txt', '.objects')
+        return objects_filename
 
     def return_sibling_filename(self):
         sibling_filename = self.filename.replace('.txt', '.siblings')
         return sibling_filename
 
     def _load_lightcurve(self):
-        return Lightcurve(self.filename, self.buffer_position)
+        return Lightcurve(self.filename, self.buffer_position, self.objectid)
 
     def return_sibling_file_status(self):
+        # Attempt to locate the sibling file for this object's file
         filename = self.return_sibling_filename()
         if not os.path.exists(filename):
             print('** sibling file missing! **')
@@ -103,11 +128,19 @@ class Source:
             return True
 
     def save_sibling(self):
+        # Can only save a sibling is one is already assigned to this object
         if self.sibling is None:
             print('** sibling not set! **')
             return 1
 
         filename = self.return_sibling_filename()
+
+        # Portalocker guarantees that if parallel processes are attempting to
+        # write siblings to the sibling file that they will not collide with
+        # each other. While this append is occuring the file is locked from
+        # any process that attempts to open it with portalocker. Attempts to
+        # open the file without portalocker will still success but could cause
+        # a collision.
         with portalocker.Lock(filename, 'a', timeout=60) as f:
             f.write('%s,%s,%.1f\n' % (self.buffer_position,
                                       self.sibling.buffer_position,
@@ -116,12 +149,15 @@ class Source:
         print('---- Sibling saved')
 
     def load_sibling(self):
+        # Attempt to locate the sibling file for this object's file
         if not self.return_sibling_file_status():
             return 1
+
         filename = self.return_sibling_filename()
 
         print('-- Loading sibling...')
 
+        # Loop through the sibling file until the object is located
         sibling_buffer_position = None
         for line in open(filename, 'r'):
             line_split = line.replace('\n', '').split(',')
@@ -133,14 +169,14 @@ class Source:
             print('-- Sibling could not be located')
             return 1
 
-        self.sibling = Source(self.filename, sibling_buffer_position)
+        # Assign the sibling to its own object instance
+        self.sibling = Object(self.filename, sibling_buffer_position)
         print('-- Sibling loaded!')
         return 0
 
     def set_sibling(self, sibling_buffer_position):
-
-        self.sibling = Source(self.filename, sibling_buffer_position)
-        self.sibling.load_params()
+        # Assign the sibling to its own object instance
+        self.sibling = Object(self.filename, sibling_buffer_position)
 
         print('---- Sibling found at %.5f, %.5f !' % (
             self.sibling.ra, self.sibling.dec))
@@ -150,22 +186,33 @@ class Source:
         self.save_sibling()
 
     def test_sibling(self, data):
+        # See if the data is close enough to the object to be the
+        # object's sibling
+
+        # Tolerance is set in self.sibling_tol_as, in units of arcseconds
         tol_degree = self.sibling_tol_as / 3600.
         ra, dec = float(data[5]), float(data[6])
+
+        # Check to see if the data is within the correct declination range.
+        # This saves time by exiting before making more expensive calculations.
 
         delta_dec = np.abs(dec - self.dec)
         if delta_dec > tol_degree:
             return 0
 
+        # Calculate the full spherical distance between the data and
+        # the object
         delta_ra = (ra - self.ra) * np.cos(np.radians(self.dec))
         delta = np.sqrt(delta_dec ** 2. + delta_ra ** 2.)
 
+        # Determine if the sibling is within the set tolerance
         if delta <= tol_degree:
             return 1
         else:
             return 0
 
     def locate_sibling(self, attempt_to_load=True):
+        #
         print('Locating sibling for ZTF Object %i' % self.objectid)
         print('-- Object location: %.5f, %.5f ...' % (self.ra, self.dec))
 
@@ -179,7 +226,8 @@ class Source:
             if status == 1:
                 return
 
-        # Searching for sibling in the opposite filtered section of the rcid_map
+        # Searching for sibling in the opposite filtered section of
+        # the rcid_map
         filterid = None
         if self.filterid == 1:
             filterid = 2
@@ -187,8 +235,8 @@ class Source:
             filterid = 1
         rcid = self.rcid
 
-        object_filename = self.return_object_filename()
-        if not os.path.exists(object_filename):
+        objects_filename = self.return_objects_filename()
+        if not os.path.exists(objects_filename):
             print('** objects file missing! **')
             return 1
 
@@ -202,14 +250,14 @@ class Source:
         print('-- Searching between buffers %i and %i' % (
             buffer_start, buffer_end))
 
-        fileObj = open(object_filename, 'r')
-        fileObj.seek(buffer_start)
+        objects_fileobj = open(objects_filename, 'r')
+        objects_fileobj.seek(buffer_start)
 
         sibling_buffer_position = None
 
         while True:
-            line = fileObj.readline()
-            object_buffer_position = fileObj.tell()
+            line = objects_fileobj.readline()
+            object_buffer_position = objects_fileobj.tell()
 
             # Check for end of file
             if not line:
@@ -230,7 +278,7 @@ class Source:
                 sibling_buffer_position = data[-1]
                 break
 
-        fileObj.close()
+        objects_fileobj.close()
 
         if sibling_buffer_position is None:
             print('---- No sibling found')

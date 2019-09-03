@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 """
 photometry.py
+A set of functions for performing photometric calculations on lightcurves.
 """
 
 import numpy as np

@@ -1,9 +1,12 @@
 #! /usr/bin/env python
 """
 lightcurve.py
+The observations of a ZTF object make up its lightcurve, held in the
+Lightcurve class. Typically this class will be instantiated as an attribute of
+an Object class.
 """
 
-from photometry import magnitudes_to_fluxes
+from zort.photometry import magnitudes_to_fluxes
 import numpy as np
 
 
@@ -12,13 +15,19 @@ import numpy as np
 #  Lightcurve Class            #
 #                              #
 ################################
-class Lightcurve:
 
-    def __init__(self, filename, buffer_position, apply_mask=True):
+class Lightcurve:
+    """
+    The observations of a ZTF object make up its lightcurve, held in the
+    Lightcurve class. Typically this class will be instantiated as an attribute
+    of an Object class.
+    """
+
+    def __init__(self, filename, buffer_position, object_id, apply_mask=True):
+        self.object_id = object_id
         self.filename = filename
         self.buffer_position = buffer_position
-        data = self._load_lightcurve(filename, buffer_position,
-                                     apply_mask=apply_mask)
+        data = self._load_lightcurve(apply_mask=apply_mask)
         self.hmjd = data['hmjd']
         self.mag = data['mag']
         self.magerr = data['magerr']
@@ -34,15 +43,27 @@ class Lightcurve:
         self.flux_std = np.std(self.flux)
 
     def __repr__(self):
-        title = 'Filename: %s\n' % self.filename
-        title += 'Buffer Position: %s\n' % self.buffer_position
+        title = 'Object ID: %s\n' % self.object_id
         title += 'N_epochs: %i' % self.nepochs
 
         return title
 
-    def _load_lightcurve(self, filename, buffer_position, apply_mask=True):
-        file = open(filename, 'r')
-        file.seek(buffer_position)
+    def _load_lightcurve(self, apply_mask=True):
+        """
+        Loads the lightcurve from a lightcurve file, starting at the location
+        of the object. The default is to apply a mask to any observatinos with
+        a 'carflag' != 0, following the recommendation of the ZTF Public Data
+        Release website.
+        """
+        # Attempt to open file containing the lightcurve
+        try:
+            file = open(self.filename, 'r')
+        except FileNotFoundError as e:
+            print(e)
+            return None
+
+        # Jump to the location of the object in the lightcurve file
+        file.seek(self.buffer_position)
         next(file)
 
         data = []
@@ -53,14 +74,17 @@ class Lightcurve:
             else:
                 data.append(tuple(line.split()))
 
+        # Assemble the data into a numpy recarray
         dtype = [('hmjd', float), ('mag', float), ('magerr', float),
                  ('clrcoeff', float), ('carflag', int)]
         data = np.array(data, dtype=dtype)
 
+        # Apply the quality cut mask
         if apply_mask:
             cond = data['carflag'] == 0
             data = data[cond]
 
+        # Sort the observations by date
         cond = np.argsort(data['hmjd'])
         data = data[cond]
 
