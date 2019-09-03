@@ -125,3 +125,6 @@ dmypy.json
 
 # PyCharm
 .idea/
+
+# Bash
+*.DS_Store*
