@@ -42,6 +42,8 @@ if __name__ == "__main__":
           version=VERSION,
           download_url=DOWNLOAD_URL,
           packages=packages,
+          package_data={'': ['VERSION']},
+          include_package_data=True,
           classifiers=[
               'Intended Audience :: Science/Research',
               'Programming Language :: Python :: 3.7',
