@@ -1,9 +1,11 @@
 #! /usr/bin/env python
 """
 object.py
-Each ZTF object can be represented as an instance of the Object class, along with its metadata and lightcurve.
-Note that each ZTF object is only one color, with a different color of the same astrophysical object labelled as
-a different object. This class can find and save spatially coincident objects with the locate_sibling function.
+Each ZTF object can be represented as an instance of the Object class, along
+with its metadata and lightcurve. Note that each ZTF object is only one color,
+with a different color of the same astrophysical object labelled as a different
+object. This class can find and save spatially coincident objects with the
+locate_sibling function.
 """
 import os
 import pickle
@@ -21,9 +23,11 @@ from zort.lightcurve import Lightcurve
 
 class Object:
     """
-    Each ZTF object can be represented as an instance of the Object class, along with its parameters and lightcurve.
-    Note that each ZTF object is only one color, with a different color of the same astrophysical object labelled as
-    a different object. This class can find and save spatially coincident objects with the locate_sibling function.
+    Each ZTF object can be represented as an instance of the Object class,
+    along with its parameters and lightcurve. Note that each ZTF object is only
+    one color, with a different color of the same astrophysical object
+    labelled as a different object. This class can find and save spatially
+    coincident objects with the locate_sibling function.
     """
 
     def __init__(self, filename, buffer_position):
@@ -44,7 +48,8 @@ class Object:
         self.lightcurve = self._load_lightcurve()
         self.sibling = None
         self.rcid_map = None
-        self.sibling_tol_as = 2.0  # Tolerance for finding object siblings, in units of arcseconds
+        # Tolerance for finding object siblings, in units of arcseconds
+        self.sibling_tol_as = 2.0
 
     def __repr__(self):
         title = 'ZTF Object %i\n' % self.objectid
@@ -122,10 +127,12 @@ class Object:
 
         filename = self.return_sibling_filename()
 
-        # Portalocker guarantees that if parallel processes are attempting to write siblings to the
-        # sibling file that they will not collide with each other. While this append is occuring the
-        # file is locked from any process that attempts to open it with portalocker. Attempts to open
-        # the file without portalocker will still success but could cause a collision.
+        # Portalocker guarantees that if parallel processes are attempting to
+        # write siblings to the sibling file that they will not collide with
+        # each other. While this append is occuring the file is locked from
+        # any process that attempts to open it with portalocker. Attempts to
+        # open the file without portalocker will still success but could cause
+        # a collision.
         with portalocker.Lock(filename, 'a', timeout=60) as f:
             f.write('%s,%s,%.1f\n' % (self.buffer_position,
                                       self.sibling.buffer_position,
@@ -171,7 +178,8 @@ class Object:
         self.save_sibling()
 
     def test_sibling(self, data):
-        # See if the data is close enough to the object to be the object's sibling
+        # See if the data is close enough to the object to be the
+        # object's sibling
 
         # Tolerance is set in self.sibling_tol_as, in units of arcseconds
         tol_degree = self.sibling_tol_as / 3600.
@@ -184,7 +192,8 @@ class Object:
         if delta_dec > tol_degree:
             return 0
 
-        # Calculate the full spherical distance between the data and the object.
+        # Calculate the full spherical distance between the data and
+        # the object
         delta_ra = (ra - self.ra) * np.cos(np.radians(self.dec))
         delta = np.sqrt(delta_dec ** 2. + delta_ra ** 2.)
 
@@ -209,7 +218,8 @@ class Object:
             if status == 1:
                 return
 
-        # Searching for sibling in the opposite filtered section of the rcid_map
+        # Searching for sibling in the opposite filtered section of
+        # the rcid_map
         filterid = None
         if self.filterid == 1:
             filterid = 2

@@ -11,15 +11,17 @@ import glob
 parentDir = Path(__file__).parent.parent
 __version__ = open('%s/VERSION' % parentDir).readline().strip()
 
-# The first time this script is called, you will be asked for the data directory of your ZTF lightcurves, as well
-# as be forced into generating object files and rcid maps if they are not detected.
+# The first time this script is called, you will be asked for the data
+# directory of your ZTF lightcurves, as well as be forced into generating
+# object files and rcid maps if they are not detected.
 
 dataDir = os.getenv('ZTF_OBJ_DATA')
 if dataDir is None:
     message = """
-    Importing zort requires that all ZTF lightcurves in the Public Data Release(s) 
-    are downloaded onto disk. zort looks for the location of those lightcurves
-    at the environment variable ZTF_OBJ_DATA, which has not yet been set.
+    Importing zort requires that all ZTF lightcurves in the Public Data 
+    Release(s)  are downloaded onto disk. zort looks for the location of those 
+    lightcurves at the environment variable ZTF_OBJ_DATA, which has not yet 
+    been set.
 
     Please input the location of the ZTF lightcurves. In the future you 
     will most likely want to set this location as an environment 
@@ -41,7 +43,8 @@ if dataDir is None:
     print('ZTF_OBJ_DATA set to %s' % dataDir)
 
 dataFiles = set(glob.glob('%s/field*txt' % dataDir))
-objectFiles = set([f.replace('objects', 'txt') for f in glob.glob('%s/field*objects' % dataDir)])
+objectFiles = set([f.replace('objects', 'txt') for f in
+                   glob.glob('%s/field*objects' % dataDir)])
 if dataFiles != objectFiles:
     initializeFile = '%s/initialize.py' % parentDir
     message = f"""
