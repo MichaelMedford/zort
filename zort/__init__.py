@@ -19,7 +19,7 @@ dataDir = os.getenv('ZTF_OBJ_DATA')
 if dataDir is None:
     message = """
     Importing zort requires that all ZTF lightcurves in the Public Data 
-    Release(s)  are downloaded onto disk. zort looks for the location of those 
+    Release(s) are downloaded onto disk. zort looks for the location of those 
     lightcurves at the environment variable ZTF_OBJ_DATA, which has not yet 
     been set.
 
