@@ -5,7 +5,6 @@ __init__.py
 
 from pathlib import Path
 import os
-import sys
 import glob
 
 parentDir = Path(__file__).parent.parent
@@ -33,13 +32,13 @@ if dataDir is None:
     Type 'exit' to cancel this import via SystemExit. 
     """
     print(message)
-    dataDir = input()
+    dataDir = input('ZTF_OBJ_DATA = ')
     if dataDir == '':
         print('ZTF_OBJ_DATA not set. Exiting...')
-        sys.exit()
+        os._exit(0)
     if dataDir == 'exit':
         print('Exiting...')
-        sys.exit()
+        os._exit(0)
     print('ZTF_OBJ_DATA set to %s' % dataDir)
 
 dataFiles = set(glob.glob('%s/field*txt' % dataDir))
@@ -62,4 +61,4 @@ if dataFiles != objectFiles:
     python {initializeFile} --parallel --n-procs=$N_PROCS
     """
     print(message)
-    sys.exit()
+    os._exit(0)
