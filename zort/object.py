@@ -294,7 +294,7 @@ class Object:
                     ls='none', color=self.color)
         ax.invert_yaxis()
 
-        title = 'o%i_f%i' % (self.objectid, self.filterid)
+        title = 'ZTF Object %i (%s band)' % (self.objectid, self.color)
         fig.suptitle(title)
 
         fname = '%s-%i-lc.png' % (self.filename, self.buffer_position)
@@ -307,7 +307,7 @@ class Object:
         hmjd_min = np.min(self.lightcurve.hmjd) - 15
         hmjd_max = np.max(self.lightcurve.hmjd) + 15
 
-        fig, ax = plt.subplots(2, 2, figsize=(10, 6))
+        fig, ax = plt.subplots(2, 2, figsize=(12, 6))
         fig.subplots_adjust(top=0.92)
         fig.subplots_adjust(hspace=0.4)
 
@@ -334,6 +334,7 @@ class Object:
         ax[0][1].set_xlim(hmjd_min_insert, hmjd_max_insert)
         ax[0][1].set_ylabel('Magnitude')
         ax[0][1].set_xlabel('Observation Date')
+        ax[0][1].set_title('%i Days Around Peak' % insert_radius)
 
         if self.sibling is None:
             self.locate_sibling()
@@ -365,6 +366,7 @@ class Object:
             ax[1][1].set_xlim(hmjd_min_insert, hmjd_max_insert)
             ax[1][1].set_ylabel('Magnitude')
             ax[1][1].set_xlabel('Observation Date')
+            ax[1][1].set_title('%i Days Around Peak' % insert_radius)
 
         else:
             for i in range(2):
