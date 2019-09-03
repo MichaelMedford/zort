@@ -54,7 +54,7 @@ class Object:
         title += 'Object ID: %i\n' % self.objectid
         title += 'Color: %s\n' % self.color
         title += 'Ra/Dec: (%.5f, %.5f)\n' % (self.ra, self.dec)
-        title += '%i Epochs\n' % self.lightcurve.nepochs
+        title += '%i Epochs passing quality cuts\n' % self.lightcurve.nepochs
 
         return title
 
@@ -168,7 +168,7 @@ class Object:
                 break
 
         if sibling_buffer_position is None:
-            print('-- Sibling could not be located')
+            print('-- Sibling could not be loaded')
             return 1
 
         # Assign the sibling to its own object instance
@@ -339,8 +339,8 @@ class Object:
             self.locate_sibling()
 
         if self.sibling is not None:
-            self.sibling.load_params()
-            self.sibling.load_lightcurve()
+            self.sibling._load_params()
+            self.sibling._load_lightcurve()
 
             ax[1][0].errorbar(self.sibling.lightcurve.hmjd,
                               self.sibling.lightcurve.mag,
