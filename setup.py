@@ -12,7 +12,7 @@ MAINTAINER = 'Michael Medford'
 MAINTAINER_EMAIL = 'michaelmedford@berkeley.edu'
 URL = 'https://github.com/MichaelMedford/zort'
 LICENSE = 'MIT'
-VERSION = open('VERSION').readline().strip()
+VERSION = open('zort/VERSION').readline().strip()
 DOWNLOAD_URL = 'https://github.com/MichaelMedford/zort/tarball/%s' % VERSION
 
 try:
