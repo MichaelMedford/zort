@@ -52,7 +52,7 @@ required for faster object access.
 ### Initialization
 
 ```zort``` requires that the location of the lightcurve files be saved as 
-an environemnt variable **ZTF_OBJ_DATA**. You will most likely want to set this 
+an environemnt variable **ZTF_LC_DATA**. You will most likely want to set this 
 location as an environment variable in your ~/.bashrc file or ~/.cshrc.
 
 ```zort``` creates two additional data products per lightcurve file 

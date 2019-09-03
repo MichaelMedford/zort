@@ -15,16 +15,16 @@ zortDir = '%s/zort' % Path(__file__).parent
 sys.path.append(zortDir)
 from parallel import parallel_process
 
-dataDir = os.getenv('ZTF_OBJ_DATA')
+dataDir = os.getenv('ZTF_LC_DATA')
 if dataDir is None:
     message = """
     Importing zort requires that all ZTF lightcurves in the Public Data 
     Release(s) are downloaded onto disk. zort looks for the location of those 
-    lightcurves at the environment variable ZTF_OBJ_DATA, which has not yet 
+    lightcurves at the environment variable ZTF_LC_DATA, which has not yet 
     been set.
 
     Please set the location of the ZTF lightcurves as an environment 
-    variable ZTF_OBJ_DATA in your ~/.bashrc file or ~/.cshrc before running 
+    variable ZTF_LC_DATA in your ~/.bashrc file or ~/.cshrc before running 
     this initialization script.
     """
 

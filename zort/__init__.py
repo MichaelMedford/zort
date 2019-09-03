@@ -15,17 +15,17 @@ __version__ = open('%s/VERSION' % parentDir).readline().strip()
 # directory of your ZTF lightcurves, as well as be forced into generating
 # object files and rcid maps if they are not detected.
 
-dataDir = os.getenv('ZTF_OBJ_DATA')
+dataDir = os.getenv('ZTF_LC_DATA')
 if dataDir is None:
     message = """
     Importing zort requires that all ZTF lightcurves in the Public Data 
     Release(s) are downloaded onto disk. zort looks for the location of those 
-    lightcurves at the environment variable ZTF_OBJ_DATA, which has not yet 
+    lightcurves at the environment variable ZTF_LC_DATA, which has not yet 
     been set.
 
     Please input the location of the ZTF lightcurves. In the future you 
     will most likely want to set this location as an environment 
-    variable ZTF_OBJ_DATA in your ~/.bashrc file or ~/.cshrc.
+    variable ZTF_LC_DATA in your ~/.bashrc file or ~/.cshrc.
 
     Instructions for downloading and extracting these files for
     Data Release 1 can be found at: https://www.ztf.caltech.edu/page/dr1#12c
@@ -33,14 +33,14 @@ if dataDir is None:
     Type 'exit' to cancel this import via SystemExit. 
     """
     print(message)
-    dataDir = input('ZTF_OBJ_DATA = ')
+    dataDir = input('ZTF_LC_DATA = ')
     if dataDir == '':
-        print('ZTF_OBJ_DATA not set. Exiting...')
+        print('ZTF_LC_DATA not set. Exiting...')
         sys.exit()
     if dataDir == 'exit':
         print('Exiting...')
         sys.exit()
-    print('ZTF_OBJ_DATA set to %s' % dataDir)
+    print('ZTF_LC_DATA set to %s' % dataDir)
 
 dataFiles = set(glob.glob('%s/field*txt' % dataDir))
 objectFiles = set([f.replace('objects', 'txt') for f in
@@ -50,10 +50,10 @@ if dataFiles != objectFiles:
     message = f"""
     zort requires that all ZTF lightcurves on disk have a object file built 
     for faster data access. These object files do not appear to be in the 
-    ZTF_OBJ_DATA folder.
+    ZTF_LC_DATA folder.
 
     Object files must be generated from the lightcurve files currently 
-    located in ZTF_OBJ_DATA. This process will take many hours with a 
+    located in ZTF_LC_DATA. This process will take many hours with a 
     single processor and about one hour with 30 cores. 
 
     To generate object files either run:
