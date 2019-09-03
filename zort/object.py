@@ -49,10 +49,12 @@ class Object:
         self.sibling_tol_as = 2.0
 
     def __repr__(self):
-        title = 'ZTF Object %i\n' % self.objectid
+        title = 'Filename: %s\n' % self.filename.split('/')[-1]
+        title += 'Buffer Position: %i\n' % self.buffer_position
+        title += 'Object ID: %i\n' % self.objectid
         title += 'Color: %s\n' % self.color
-        title += 'Ra/Dec: (%.5f, %.5f)' % (self.ra, self.dec)
-        title += '%i Epochs' % self.lightcurve.nepochs
+        title += 'Ra/Dec: (%.5f, %.5f)\n' % (self.ra, self.dec)
+        title += '%i Epochs passing quality cuts\n' % self.lightcurve.nepochs
 
         return title
 
@@ -166,7 +168,7 @@ class Object:
                 break
 
         if sibling_buffer_position is None:
-            print('-- Sibling could not be located')
+            print('-- Sibling could not be loaded')
             return 1
 
         # Assign the sibling to its own object instance
@@ -292,7 +294,7 @@ class Object:
                     ls='none', color=self.color)
         ax.invert_yaxis()
 
-        title = 'o%i_f%i' % (self.objectid, self.filterid)
+        title = 'ZTF Object %i (%s band)' % (self.objectid, self.color)
         fig.suptitle(title)
 
         fname = '%s-%i-lc.png' % (self.filename, self.buffer_position)
@@ -305,7 +307,7 @@ class Object:
         hmjd_min = np.min(self.lightcurve.hmjd) - 15
         hmjd_max = np.max(self.lightcurve.hmjd) + 15
 
-        fig, ax = plt.subplots(2, 2, figsize=(10, 6))
+        fig, ax = plt.subplots(2, 2, figsize=(12, 6))
         fig.subplots_adjust(top=0.92)
         fig.subplots_adjust(hspace=0.4)
 
@@ -332,13 +334,14 @@ class Object:
         ax[0][1].set_xlim(hmjd_min_insert, hmjd_max_insert)
         ax[0][1].set_ylabel('Magnitude')
         ax[0][1].set_xlabel('Observation Date')
+        ax[0][1].set_title('%i Days Around Peak' % insert_radius)
 
         if self.sibling is None:
             self.locate_sibling()
 
         if self.sibling is not None:
-            self.sibling.load_params()
-            self.sibling.load_lightcurve()
+            self.sibling._load_params()
+            self.sibling._load_lightcurve()
 
             ax[1][0].errorbar(self.sibling.lightcurve.hmjd,
                               self.sibling.lightcurve.mag,
@@ -363,6 +366,7 @@ class Object:
             ax[1][1].set_xlim(hmjd_min_insert, hmjd_max_insert)
             ax[1][1].set_ylabel('Magnitude')
             ax[1][1].set_xlabel('Observation Date')
+            ax[1][1].set_title('%i Days Around Peak' % insert_radius)
 
         else:
             for i in range(2):
