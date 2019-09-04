@@ -46,7 +46,7 @@ if __name__ == "__main__":
           include_package_data=True,
           classifiers=[
               'Intended Audience :: Science/Research',
-              'Programming Language :: Python :: 3.7',
+              'Programming Language :: Python :: 3.6',
               'License :: OSI Approved :: MIT License',
               'Topic :: Scientific/Engineering :: Astronomy',
               'Operating System :: POSIX',

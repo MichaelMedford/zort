@@ -31,6 +31,13 @@ otherwise labelled as two separate objects by pairing objects as "siblings"
 
 ### Installation
 
+Preferred method is through pip:
+
+```
+pip install zort
+```
+
+Latest version can also be installed from github:
 ```
 git clone https://github.com/MichaelMedford/zort.git
 cd zort
@@ -212,7 +219,7 @@ cand be generated using the ```obj.plot_lightcurves()``` method.
 ![](example_images/field000245_ra357.03053to5.26702_dec-27.96964to-20.4773.txt-6852-lc-with_sibling.png)
 
 ## Requirements
-* Python 3.7
+* Python 3.6
 
 ## Authors
 * Michael Medford <MichaelMedford@berkeley.edu>
