@@ -23,8 +23,8 @@ observation field ID reside in the same file.
 
 ```zort``` provides facilitates the reading and inspection of lightcurves in 
 the ZTF Public Data Release. The features of ```zort``` include:
-- Instant access to lightcurves by (1) ZTF Object ID or (2) sky location 
-specified through right ascension and declination, after initial search 
+- Seamless looping through ZTF lightcurves for custom filtering, where 
+interesting objects can be saved and recovered by only their file location
 - Consolidating g-band and R-band lightcurves of a single source that are 
 otherwise labelled as two separate objects by pairing objects as "siblings"
 - Plotting lightcurves in multiple colors for visual inspection
