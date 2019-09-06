@@ -65,7 +65,7 @@ def return_ZTF_RCID_corners(ra, dec):
 
 
 def load_ZTF_fields():
-    here = path.abspath(path.dirname(__file__))
+    here = os.path.abspath(os.path.dirname(__file__))
     ZTF_fields_fname = '%s/data/ZTF_Fields.txt' % here
     ZTF_fields = np.genfromtxt(ZTF_fields_fname, skip_header=1,
                                dtype=[('id', int), ('ra', float),
