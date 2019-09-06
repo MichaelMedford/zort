@@ -1,55 +1,50 @@
 #! /usr/bin/env python
 """
 __setup__.py
+Inspired by: https://github.com/pypa/sampleproject
 """
 
-DESCRIPTION = "Read lightcurves from the ZTF Public Data Release  "
-LONG_DESCRIPTION = """ Read lightcurves from the ZTF Public Data Release """
-
+DESCRIPTION = "Reader for lightcurves from the ZTF Public Data Release"
 DISTNAME = 'zort'
 AUTHOR = 'Michael Medford'
-MAINTAINER = 'Michael Medford'
-MAINTAINER_EMAIL = 'michaelmedford@berkeley.edu'
+AUTHOR_EMAIL = 'michaelmedford@berkeley.edu'
 URL = 'https://github.com/MichaelMedford/zort'
 LICENSE = 'MIT'
 VERSION = open('zort/VERSION').readline().strip()
 DOWNLOAD_URL = 'https://github.com/MichaelMedford/zort/tarball/%s' % VERSION
 
-try:
-    from setuptools import setup, find_packages
-    _has_setuptools = True
-except ImportError:
-    from distutils.core import setup
-_has_setuptools = False
+from setuptools import setup, find_packages
+from os import path
 
-if __name__ == "__main__":
+here = path.abspath(path.dirname(__file__))
 
-    if _has_setuptools:
-        packages = find_packages()
-    else:
-        # This should be updated if new submodules are added
-        packages = ['zort']
+# Get the long description from the README file
+with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+    LONG_DESCRIPTION = f.read()
+LONG_DESCRIPTION_CONTENT_TYPE = 'text/markdown'
 
-    setup(name=DISTNAME,
-          author=AUTHOR,
-          author_email=MAINTAINER_EMAIL,
-          maintainer=MAINTAINER,
-          maintainer_email=MAINTAINER_EMAIL,
-          description=DESCRIPTION,
-          long_description=LONG_DESCRIPTION,
-          license=LICENSE,
-          url=URL,
-          version=VERSION,
-          download_url=DOWNLOAD_URL,
-          packages=packages,
-          package_data={'': ['VERSION']},
-          include_package_data=True,
-          classifiers=[
-              'Intended Audience :: Science/Research',
-              'Programming Language :: Python :: 3.6',
-              'License :: OSI Approved :: MIT License',
-              'Topic :: Scientific/Engineering :: Astronomy',
-              'Operating System :: POSIX',
-              'Operating System :: Unix',
-              'Operating System :: MacOS'],
-          )
+setup(name=DISTNAME,
+      author=AUTHOR,
+      author_email=AUTHOR_EMAIL,
+      description=DESCRIPTION,
+      long_description=LONG_DESCRIPTION,
+      long_description_content_type=LONG_DESCRIPTION_CONTENT_TYPE,
+      license=LICENSE,
+      url=URL,
+      version=VERSION,
+      download_url=DOWNLOAD_URL,
+      packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+      python_requires='>=3.5',
+      install_requires=['tqdm',
+                        'portalocker',
+                        'matplotlib',
+                        'numpy'],
+      classifiers=['Intended Audience :: Science/Research',
+                   'Programming Language :: Python :: 3.6',
+                   'License :: OSI Approved :: MIT License',
+                   'Topic :: Scientific/Engineering :: Astronomy',
+                   'Operating System :: POSIX',
+                   'Operating System :: Unix',
+                   'Operating System :: MacOS'],
+      project_urls={'Lightcurves': 'https://www.ztf.caltech.edu/page/dr1#12c'}
+      )
