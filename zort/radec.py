@@ -13,27 +13,27 @@ def load_ZTF_CCD_corners(ra=0, dec=0):
     with open(ZTF_CCD_layout_fname, 'r') as f:
         lines = f.readlines()
 
-    ZTF_CCD_layout = {}
+    ZTF_CCD_corners = {}
     for line in lines[1:]:
         ra_offset, dec_offset, chip = line.split()
-        ra_offset, dec_offset = float(ra_offset), float(dec_offset)
+        ra_offset, dec_offset = -float(ra_offset), float(dec_offset)
         ra_offset /= np.cos(np.radians(dec))
         ra_offset += ra
         dec_offset += dec
-        if chip not in ZTF_CCD_layout.keys():
-            ZTF_CCD_layout[chip] = [(ra_offset, dec_offset)]
+        if chip not in ZTF_CCD_corners.keys():
+            ZTF_CCD_corners[chip] = [(ra_offset, dec_offset)]
         else:
-            ZTF_CCD_layout[chip].append((ra_offset, dec_offset))
+            ZTF_CCD_corners[chip].append((ra_offset, dec_offset))
 
-    return ZTF_CCD_layout
+    return ZTF_CCD_corners
 
 
-def return_CDD_corners(ra, dec):
-    ZTF_CCD_layout = load_ZTF_CCD_corners(ra, dec)
+def return_RCID_corners(ra, dec):
+    ZTF_CCD_corners = load_ZTF_CCD_corners(ra, dec)
 
-    corners_dct = {}
-    ccd_counter = 0
-    for CCD, corners_tmp in ZTF_CCD_layout.items():
+    ZTF_RCID_corners = {}
+    rcid_counter = 0
+    for CCD, corners_tmp in ZTF_CCD_corners.items():
         corners = corners_tmp[1:]
         corners.append(corners_tmp[0])
         corners = np.array(corners)
@@ -53,20 +53,21 @@ def return_CDD_corners(ra, dec):
                                      [top_left[0], top_left[1]],
                                      [bot_left[0], bot_left[1]],
                                      [bot_right[0], bot_right[1]]])
-            corners_dct[ccd_counter] = quad_corners
+            ZTF_RCID_corners[rcid_counter] = quad_corners
 
-            ccd_counter += 1
+            rcid_counter += 1
 
-    return corners_dct
+    return ZTF_RCID_corners
 
 
 def load_ZTF_fields():
     here = path.abspath(path.dirname(__file__))
     ZTF_fields_fname = '%s/data/ZTF_Fields.txt' % here
-    data = np.genfromtxt(ZTF_fields_fname, skip_header=1,
-                         dtype=[('id', int), ('ra', float), ('dec', float),
-                                ('ebv', float), ('galLong', float),
-                                ('galLat', float),
-                                ('eclLong', float), ('eclLat', float),
-                                ('entry', int)])
-    return data
+    ZTF_fields = np.genfromtxt(ZTF_fields_fname, skip_header=1,
+                               dtype=[('id', int), ('ra', float),
+                                      ('dec', float),
+                                      ('ebv', float), ('galLong', float),
+                                      ('galLat', float),
+                                      ('eclLong', float), ('eclLat', float),
+                                      ('entry', int)])
+    return ZTF_fields
