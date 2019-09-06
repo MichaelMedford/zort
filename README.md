@@ -215,11 +215,11 @@ processes are attempting to save siblings to a sibling file simultaneously.
 
 A lightcurve plot can be generated for any object using the 
 ```obj.plot_lightcurve()``` method.
-![](example_images/field000245_ra357.03053to5.26702_dec-27.96964to-20.4773.txt-6852-lc.png)
+![](https://raw.githubusercontent.com/MichaelMedford/zort/master/example_images/field000245_ra357.03053to5.26702_dec-27.96964to-20.4773.txt-6852-lc.png)
 
 A lightcurve plot including an object's sibling 
 cand be generated using the ```obj.plot_lightcurves()``` method.
-![](example_images/field000245_ra357.03053to5.26702_dec-27.96964to-20.4773.txt-6852-lc-with_sibling.png)
+![](https://raw.githubusercontent.com/MichaelMedford/zort/master/example_images/field000245_ra357.03053to5.26702_dec-27.96964to-20.4773.txt-6852-lc-with_sibling.png)
 
 ## Requirements
 * Python 3.6
