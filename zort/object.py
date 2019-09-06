@@ -187,13 +187,12 @@ class Object:
 
         self.save_sibling()
 
-    def test_sibling(self, data):
+    def test_radec(self, ra, dec):
         # See if the data is close enough to the object to be the
         # object's sibling
 
         # Tolerance is set in self.sibling_tol_as, in units of arcseconds
         tol_degree = self.sibling_tol_as / 3600.
-        ra, dec = float(data[5]), float(data[6])
 
         # Check to see if the data is within the correct declination range.
         # This saves time by exiting before making more expensive calculations.
@@ -270,7 +269,8 @@ class Object:
                 break
 
             data = line.replace('\n', '').split(',')
-            status = self.test_sibling(data)
+            ra, dec = float(data[5]), float(data[6])
+            status = self.test_radec(ra, dec)
 
             if status == 0:
                 # No sibling found on this line

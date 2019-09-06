@@ -7,6 +7,7 @@ lightcurve. Filters can be applied to objects and/or lightcurves.
 """
 
 import os
+import pickle
 from zort.object import Object
 
 
@@ -56,6 +57,7 @@ class LightcurveFile:
         self.objects_filename = self.return_objects_filename()
         self.init_buffer_position = init_buffer_position
         self.objects_file = self.return_objects_file()
+        self.rcid_map = self.load_rcid_map()
 
     def __iter__(self):
         return self
@@ -96,3 +98,35 @@ class LightcurveFile:
     def return_objects_filename(self):
         objects_filename = self.filename.replace('.txt', '.objects')
         return objects_filename
+
+    def load_rcid_map(self):
+        # Attempt to locate the rcid map for this object's file
+        rcid_map_filename = self.filename.replace('.txt', '.rcid_map')
+        if not os.path.exists(rcid_map_filename):
+            print('** rcid_map missing! **')
+            return None
+
+        rcid_map = pickle.load(open(rcid_map_filename, 'rb'))
+        return rcid_map
+
+    def locate_objects_by_radec(self, ra, dec, rcid, radius=3.):
+        g_objects = []
+        r_objects = []
+        for fid in [1, 2]:
+            buffer_start, buffer_end = self.rcid_map[fid][rcid]
+            self.objects_file.seek(buffer_start)
+            buffer_location = self.objects_file.tell()
+            while buffer_location < buffer_end:
+                line = self.objects_file.readline()
+                if line == '':
+                    break
+                else:
+                    object = self.return_object(line)
+                    object.sibling_tol_as = radius
+                    if object.test_radec(ra, dec):
+                        if fid == 1:
+                            g_objects.append(object)
+                        else:
+                            r_objects.append(object)
+                buffer_location = self.objects_file.tell()
+        return g_objects, r_objects
