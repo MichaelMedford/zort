@@ -17,27 +17,29 @@ def load_ZTF_CCD_corners(ra=0, dec=0):
     for line in lines[1:]:
         ra_offset, dec_offset, chip = line.split()
         ra_offset, dec_offset = -float(ra_offset), float(dec_offset)
+        chip = int(chip)
         ra_offset /= np.cos(np.radians(dec))
         ra_offset += ra
         dec_offset += dec
         if chip not in ZTF_CCD_corners.keys():
-            ZTF_CCD_corners[chip] = [(ra_offset, dec_offset)]
+            ZTF_CCD_corners[chip] = [[ra_offset, dec_offset]]
         else:
-            ZTF_CCD_corners[chip].append((ra_offset, dec_offset))
+            ZTF_CCD_corners[chip].append([ra_offset, dec_offset])
+
+    for i in range(1, 17):
+        ZTF_CCD_corners[i] = np.array(ZTF_CCD_corners[i])
 
     return ZTF_CCD_corners
 
 
-def return_RCID_corners(ra, dec):
+def return_ZTF_RCID_corners(ra, dec):
     ZTF_CCD_corners = load_ZTF_CCD_corners(ra, dec)
 
     ZTF_RCID_corners = {}
     rcid_counter = 0
     for CCD, corners_tmp in ZTF_CCD_corners.items():
         corners = corners_tmp[1:]
-        corners.append(corners_tmp[0])
-        corners = np.array(corners)
-        corners[:, 0] *= -1
+        corners = np.vstack((corners, corners_tmp[0]))
 
         for quad in np.arange(4):
             top_right = ((corners[quad][0] + corners[0][0]) / 2.,
@@ -71,3 +73,72 @@ def load_ZTF_fields():
                                       ('eclLong', float), ('eclLat', float),
                                       ('entry', int)])
     return ZTF_fields
+
+
+def test_within_CCD_corners(ra, dec, ZTF_CCD_corners):
+    lower_right = ZTF_CCD_corners[1][0]
+    lower_left = ZTF_CCD_corners[4][3]
+    upper_right = ZTF_CCD_corners[13][1]
+    upper_left = ZTF_CCD_corners[16][2]
+
+    cond1 = ra >= np.min([lower_left[0], upper_left[0]])
+    cond2 = ra <= np.max([lower_right[0], upper_right[0]])
+    cond3 = dec >= np.min([lower_left[1], lower_right[1]])
+    cond4 = dec <= np.min([upper_left[1], upper_right[1]])
+    if cond1 and cond2 and cond3 and cond4:
+        return True
+    else:
+        return False
+
+
+def return_field_id(ra, dec):
+    # Only searches the primary grid
+
+    ZTF_fields = load_ZTF_fields()
+    for ZTF_field in ZTF_fields:
+
+        if ZTF_field['id'] > 879:
+            print('No matching field_id found')
+            break
+
+        field_ra, field_dec = ZTF_field['ra'], ZTF_field['dec']
+        ZTF_CCD_corners = load_ZTF_CCD_corners(field_ra, field_dec)
+        if test_within_CCD_corners(ra, dec, ZTF_CCD_corners):
+            return ZTF_field['id']
+
+    return None
+
+
+def test_within_RCID_corners(ra, dec, ZTF_RCID_corners_single):
+    lower_right = ZTF_RCID_corners_single[3]
+    lower_left = ZTF_RCID_corners_single[2]
+    upper_right = ZTF_RCID_corners_single[0]
+    upper_left = ZTF_RCID_corners_single[1]
+
+    cond1 = ra >= np.min([lower_left[0], upper_left[0]])
+    cond2 = ra <= np.max([lower_right[0], upper_right[0]])
+    cond3 = dec >= np.min([lower_left[1], lower_right[1]])
+    cond4 = dec <= np.min([upper_left[1], upper_right[1]])
+    if cond1 and cond2 and cond3 and cond4:
+        return True
+    else:
+        return False
+
+
+def return_rcid(ra, dec, field_id=None):
+    if field_id is None:
+        field_id = return_field_id(ra, dec)
+        if field_id is None:
+            return None
+    ZTF_fields = load_ZTF_fields()
+    ZTF_field = ZTF_fields[ZTF_fields['id'] == field_id]
+    field_ra, field_dec = ZTF_field['ra'][0], ZTF_field['dec'][0]
+    ZTF_RCID_corners = return_ZTF_RCID_corners(field_ra, field_dec)
+
+    for rcid in range(64):
+        ZTF_RCID_corners_single = ZTF_RCID_corners[rcid]
+        if test_within_RCID_corners(ra, dec, ZTF_RCID_corners_single):
+            return rcid
+
+    print('No matching rcid found')
+    return None
