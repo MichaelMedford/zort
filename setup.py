@@ -10,7 +10,7 @@ AUTHOR = 'Michael Medford'
 AUTHOR_EMAIL = 'michaelmedford@berkeley.edu'
 URL = 'https://github.com/MichaelMedford/zort'
 LICENSE = 'MIT'
-VERSION = open('zort/VERSION').readline().strip()
+VERSION = open('VERSION').readline().strip()
 DOWNLOAD_URL = 'https://github.com/MichaelMedford/zort/tarball/%s' % VERSION
 
 from setuptools import setup, find_packages
