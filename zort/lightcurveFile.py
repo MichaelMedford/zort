@@ -110,8 +110,7 @@ class LightcurveFile:
         return rcid_map
 
     def locate_objects_by_radec(self, ra, dec, rcid, radius=3.):
-        g_objects = []
-        r_objects = []
+        objects = []
         for fid in [1, 2]:
             buffer_start, buffer_end = self.rcid_map[fid][rcid]
             self.objects_file.seek(buffer_start)
@@ -124,9 +123,6 @@ class LightcurveFile:
                     object = self.return_object(line)
                     object.sibling_tol_as = radius
                     if object.test_radec(ra, dec):
-                        if fid == 1:
-                            g_objects.append(object)
-                        else:
-                            r_objects.append(object)
+                        objects.append(object)
                 buffer_location = self.objects_file.tell()
-        return g_objects, r_objects
+        return objects
