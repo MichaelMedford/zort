@@ -16,9 +16,8 @@ DOWNLOAD_URL = 'https://github.com/MichaelMedford/zort/tarball/%s' % VERSION
 from setuptools import setup, find_packages
 from os import path
 
-here = path.abspath(path.dirname(__file__))
-
 # Get the long description from the README file
+here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     LONG_DESCRIPTION = f.read()
 LONG_DESCRIPTION_CONTENT_TYPE = 'text/markdown'
@@ -41,6 +40,7 @@ setup(name=DISTNAME,
                         'portalocker',
                         'matplotlib',
                         'numpy'],
+      scripts=['bin/zort-initialize'],
       classifiers=['Intended Audience :: Science/Research',
                    'Programming Language :: Python :: 3.6',
                    'License :: OSI Approved :: MIT License',
