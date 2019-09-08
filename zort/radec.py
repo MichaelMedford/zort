@@ -93,22 +93,16 @@ def test_within_CCD_corners(ra, dec, ZTF_CCD_corners):
         return False
 
 
-def return_field_id(ra, dec):
-    # Only searches the primary grid
-
+def return_fields(ra, dec):
+    fields = []
     ZTF_fields = load_ZTF_fields()
     for ZTF_field in ZTF_fields:
-
-        if ZTF_field['id'] > 879:
-            print('No matching field_id found')
-            break
-
         field_ra, field_dec = ZTF_field['ra'], ZTF_field['dec']
         ZTF_CCD_corners = load_ZTF_CCD_corners(field_ra, field_dec)
         if test_within_CCD_corners(ra, dec, ZTF_CCD_corners):
-            return ZTF_field['id']
+            fields.append(ZTF_field['id'])
 
-    return None
+    return fields
 
 
 def test_within_RCID_corners(ra, dec, ZTF_RCID_corners_single):
@@ -127,13 +121,9 @@ def test_within_RCID_corners(ra, dec, ZTF_RCID_corners_single):
         return False
 
 
-def return_rcid(ra, dec, field_id=None):
-    if field_id is None:
-        field_id = return_field_id(ra, dec)
-        if field_id is None:
-            return None
+def return_rcid(field, ra, dec):
     ZTF_fields = load_ZTF_fields()
-    ZTF_field = ZTF_fields[ZTF_fields['id'] == field_id]
+    ZTF_field = ZTF_fields[ZTF_fields['id'] == field]
     field_ra, field_dec = ZTF_field['ra'][0], ZTF_field['dec'][0]
     ZTF_RCID_corners = return_ZTF_RCID_corners(field_ra, field_dec)
 
@@ -148,14 +138,16 @@ def return_rcid(ra, dec, field_id=None):
 
 def locate_objects(ra, dec, radius=3.,
                    data_dir=os.getenv('ZTF_LC_DATA')):
-    field_id = return_field_id(ra, dec)
-    rcid = return_rcid(ra, dec, field_id)
+    objects = []
+    fields = return_fields(ra, dec)
+    for field in fields:
+        rcid = return_rcid(field, ra, dec)
 
-    lightcurve_filename = glob.glob('%s/field%06d*.txt' % (data_dir,
-                                                           field_id))[0]
+        lightcurve_filename = glob.glob('%s/field%06d*.txt' % (data_dir,
+                                                               field))[0]
 
-    lightcurveFile = LightcurveFile(lightcurve_filename)
-    objects = lightcurveFile.locate_objects_by_radec(ra, dec, rcid,
-                                                     radius=radius)
+        lightcurveFile = LightcurveFile(lightcurve_filename)
+        objects += lightcurveFile.locate_objects_by_radec(ra, dec, rcid,
+                                                          radius=radius)
 
     return objects
