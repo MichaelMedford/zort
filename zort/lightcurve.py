@@ -51,7 +51,7 @@ class Lightcurve:
     def _load_lightcurve(self, apply_mask=True):
         """
         Loads the lightcurve from a lightcurve file, starting at the location
-        of the object. The default is to apply a mask to any observatinos with
+        of the object. The default is to apply a mask to any observations with
         a 'carflag' != 0, following the recommendation of the ZTF Public Data
         Release website.
         """

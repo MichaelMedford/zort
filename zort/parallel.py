@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 """
 parallel.py
-A native python implementation of processing embaressingly parallel tasks using
-concurrent futures. These processes will also display progress bars.
+A native python implementation of processing embarrassingly parallel tasks
+using concurrent futures. These processes will also display progress bars.
 """
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor, as_completed
