@@ -142,11 +142,11 @@ def locate_objects(data_dir, ra, dec, radius=3.):
     for field in fields:
         rcid = return_rcid(field, ra, dec)
 
-        lightcurve_filename = glob.glob('%s/field%06d*.txt' % (data_dir,
-                                                               field))[0]
-
-        lightcurveFile = LightcurveFile(lightcurve_filename)
-        objects += lightcurveFile.locate_objects_by_radec(ra, dec, rcid,
-                                                          radius=radius)
+        lightcurve_filenames = glob.glob('%s/field%06d*.txt' % (data_dir,
+                                                               field))
+        for lightcurve_filename in lightcurve_filenames:
+            lightcurveFile = LightcurveFile(lightcurve_filename)
+            objects += lightcurveFile.locate_objects_by_radec(ra, dec, rcid,
+                                                              radius=radius)
 
     return objects
