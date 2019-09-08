@@ -81,9 +81,6 @@ class LightcurveFile:
         except AttributeError:
             filename = filename
 
-        if '/' not in filename:
-            filename = os.getenv('ZTF_LC_DATA') + '/' + filename
-
         return filename
 
     def return_object(self, line):
@@ -91,7 +88,12 @@ class LightcurveFile:
         return Object(self.filename, buffer_position)
 
     def return_objects_file(self):
-        file = open(self.objects_filename, 'r')
+        # Attempt to open file containing the lightcurve
+        try:
+            file = open(self.objects_filename, 'r')
+        except FileNotFoundError as e:
+            print(e)
+            return None
         file.seek(self.init_buffer_position)
         return file
 
