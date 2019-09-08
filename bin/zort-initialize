@@ -20,13 +20,6 @@ def gather_lightcurve_files(dataDir):
     return fis
 
 
-def gather_objects_files(dataDir):
-    fis = [f for f in glob.glob('%s/field*.objects' % dataDir) if
-           not os.path.exists(f.replace('.objects', '.rcid_map'))]
-    fis.sort()
-    return fis
-
-
 def generate_objects_file(lightcurve_file):
     f_in = open(lightcurve_file, 'r')
 
@@ -56,30 +49,7 @@ def generate_objects_file(lightcurve_file):
 
     f_in.close()
 
-
-def generate_objects_files(dataDir, parallelFlag=False):
-    lightcurve_files = gather_lightcurve_files(dataDir)
-    if parallelFlag:
-        from mpi4py import MPI
-        comm = MPI.COMM_WORLD
-        rank = comm.Get_rank()
-        size = comm.Get_size()
-
-        if rank == 0:
-            print('Generating object files for %i lightcurve files' % len(
-                lightcurve_files))
-
-        idx = rank
-        while idx < len(lightcurve_files):
-            lightcurve_file = lightcurve_files[idx]
-            generate_objects_file(lightcurve_file)
-            idx += size
-
-    else:
-        print('Generating object files for %i lightcurve files' % len(
-            lightcurve_files))
-        for lightcurve_file in lightcurve_files:
-            generate_objects_file(lightcurve_file)
+    return objects_file
 
 
 def save_rcid_map(DR1_object_file, rcid_map):
@@ -148,31 +118,6 @@ def generate_rcid_map(objects_file):
     save_rcid_map(rcid_map_file, rcid_map)
 
 
-def generate_rcid_maps(dataDir, parallelFlag=False):
-    objects_files = gather_objects_files(dataDir)
-    if parallelFlag:
-        from mpi4py import MPI
-        comm = MPI.COMM_WORLD
-        rank = comm.Get_rank()
-        size = comm.Get_size()
-
-        if rank == 0:
-            print('Generating rcid maps for %i objects files' % len(
-                objects_files))
-
-        idx = rank
-        while idx < len(objects_files):
-            objects_file = objects_files[idx]
-            generate_rcid_map(objects_file)
-            idx += size
-
-    else:
-        print('Generating rcid maps for %i objects files' % len(
-            objects_files))
-        for objects_file in objects_files:
-            generate_rcid_map(objects_file)
-
-
 def main():
     # Get arguments
     parser = argparse.ArgumentParser(description=__doc__)
@@ -199,10 +144,32 @@ def main():
             print('mpi4py must be installed to use -parallel mode.')
             sys.exit(0)
 
-    generate_objects_files(dataDir=args.lightcurve_file_directory,
-                           parallelFlag=args.parallelFlag)
-    generate_rcid_maps(dataDir=args.lightcurve_file_directory,
-                       parallelFlag=args.parallelFlag)
+    lightcurve_files = gather_lightcurve_files(args.lightcurve_file_directory)
+    if args.parallelFlag:
+        from mpi4py import MPI
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        size = comm.Get_size()
+
+        if rank == 0:
+            print('Generating object files and RCID maps '
+                  'for %i lightcurve files' % len(
+                lightcurve_files))
+
+        idx = rank
+        while idx < len(lightcurve_files):
+            lightcurve_file = lightcurve_files[idx]
+            objects_file = generate_objects_file(lightcurve_file)
+            generate_rcid_map(objects_file)
+            idx += size
+
+    else:
+        print('Generating object files and RCID maps '
+              'for %i lightcurve files' % len(
+            lightcurve_files))
+        for lightcurve_file in lightcurve_files:
+            objects_file = generate_objects_file(lightcurve_file)
+            generate_rcid_map(objects_file)
 
 
 if __name__ == '__main__':
