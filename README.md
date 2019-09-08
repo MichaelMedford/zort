@@ -61,11 +61,7 @@ required for faster object access.
 
 ### Initialization
 
-```zort``` requires that the location of the lightcurve files be saved as 
-an environemnt variable **ZTF_LC_DATA**. You will most likely want to set this 
-location as an environment variable in your ~/.bashrc file or ~/.cshrc.
-
-```zort``` creates two additional data products per lightcurve file 
+```zort``` requires two additional data products per lightcurve file 
 (```*.txt```) in order to make object discovery and multiple color 
 consolidation faster. Object files (```*.objects```) contain all of the 
 metadata for each object in a lightcurve file. RCID map files 
@@ -73,14 +69,18 @@ metadata for each object in a lightcurve file. RCID map files
 matching of multiple colors for individual objects. ```zort``` requires that 
 each lightcurve file has a corresponding object file and RCID map file.
 
-To generate object files and RCID map files either run:
+To generate object files and RCID map files for a directory of lightcurve 
+files, run
 ```
-python {initializeFile}
+zort-initialize -lightcurve-file-directory=LIGHTCURVE_FILE_DIRECTORY -single
 ```
-or
+or if mpi4py is installed then launch multiple instances of 
 ```
-python {initializeFile} --parallel --n-procs=$N_PROCS
-``` 
+zort-initialize -lightcurve-file-directory=LIGHTCURVE_FILE_DIRECTORY -parallel
+```
+
+If each lightcurve file does not have an object file and an RCID map then 
+```zort``` will not be able to locate siblings 
 
 ## Examples
 

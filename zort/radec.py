@@ -136,8 +136,7 @@ def return_rcid(field, ra, dec):
     return None
 
 
-def locate_objects(ra, dec, radius=3.,
-                   data_dir=os.getenv('ZTF_LC_DATA')):
+def locate_objects(data_dir, ra, dec, radius=3.):
     objects = []
     fields = return_fields(ra, dec)
     for field in fields:

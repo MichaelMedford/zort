@@ -79,7 +79,7 @@ class LightcurveFile:
         try:
             filename = filename.decode()
         except AttributeError:
-            filename = filename
+            pass
 
         return filename
 

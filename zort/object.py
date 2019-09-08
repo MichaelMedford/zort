@@ -62,10 +62,7 @@ class Object:
         try:
             filename = filename.decode()
         except AttributeError:
-            filename = filename
-
-        if '/' not in filename:
-            filename = os.getenv('ZTF_LC_DATA') + '/' + filename
+            pass
 
         return filename
 
