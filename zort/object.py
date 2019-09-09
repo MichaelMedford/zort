@@ -115,7 +115,7 @@ class Object:
         return sibling_filename
 
     def _load_lightcurve(self):
-        return Lightcurve(self.filename, self.buffer_position, self.objectid)
+        return Lightcurve(self.filename, self.buffer_position)
 
     def return_sibling_file_status(self):
         # Attempt to locate the sibling file for this object's file
@@ -409,3 +409,24 @@ class Object:
         fig.savefig(fname)
         print('---- Lightcurves saved: %s' % fname)
         plt.close(fig)
+
+
+def save_objects(filename, objects, overwrite=False):
+    if os.path.exists(filename) and not overwrite:
+        print('%s already exists, exiting without saving objects. '
+              'Set overwrite=True to enable writing over existing '
+              'object lists.' % filename)
+        return None
+
+    with open(filename, 'w') as f:
+        for obj in objects:
+            f.write('%s,%i\n' % (obj.filename, obj.buffer_position))
+
+
+def load_objects(filename):
+    objects = []
+    for line in open(filename, 'r'):
+        filename, buffer_position = line.replace('\n', '').split(',')
+        objects.append(Object(filename, buffer_position))
+
+    return objects
