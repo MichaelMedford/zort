@@ -25,7 +25,7 @@ class Object:
     """
     Each ZTF object can be represented as an instance of the Object class,
     along with its parameters and lightcurve. Note that each ZTF object is only
-    one color, with a different color of the same astrophysical object
+    one color, with a different color from the same astrophysical source
     labelled as a different object. This class can find and save spatially
     coincident objects with the locate_sibling function.
     """
