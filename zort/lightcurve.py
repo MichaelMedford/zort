@@ -8,6 +8,7 @@ an Object class.
 
 from zort.photometry import magnitudes_to_fluxes
 import numpy as np
+import os
 
 
 ################################
@@ -23,10 +24,10 @@ class Lightcurve:
     of an Object class.
     """
 
-    def __init__(self, filename, buffer_position, object_id, apply_mask=True):
-        self.object_id = object_id
+    def __init__(self, filename, buffer_position, apply_mask=True):
         self.filename = filename
         self.buffer_position = buffer_position
+        self.object_id = None  # set in self._load_lightcurve
         data = self._load_lightcurve(apply_mask=apply_mask)
         self.hmjd = data['hmjd']
         self.mag = data['mag']
@@ -64,7 +65,8 @@ class Lightcurve:
 
         # Jump to the location of the object in the lightcurve file
         file.seek(self.buffer_position)
-        next(file)
+        line = file.readline()
+        self.object_id = int(line.split()[1:][0])
 
         data = []
 
@@ -101,3 +103,25 @@ class Lightcurve:
             return None
         else:
             return np.std(data)
+
+
+def save_lightcurves(filename, lightcurves, overwrite=False):
+    if os.path.exists(filename) and not overwrite:
+        print('%s already exists, exiting without saving objects. '
+              'Set overwrite=True to enable writing over existing '
+              'object lists.' % filename)
+        return None
+
+    with open(filename, 'w') as f:
+        for lightcurve in lightcurves:
+            f.write('%s,%i\n' % (lightcurve.filename,
+                                 lightcurve.buffer_position))
+
+
+def load_lightcurves(filename):
+    lightcurves = []
+    for line in open(filename, 'r'):
+        filename, buffer_position = line.replace('\n', '').split(',')
+        lightcurves.append(Lightcurve(filename, buffer_position))
+
+    return lightcurves
