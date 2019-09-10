@@ -120,7 +120,7 @@ save_objects('objects.list', interesting_objects)
 ```
 
 Objects and their lightcurves can be retrieved from a saved list by using the 
-```load_objects``` function. Each object comes loaded with it's metadata and 
+```load_objects``` function. Each object comes loaded with its metadata and 
 lightcurve, easily previewed by printing the object and lightcurve attribute. 
 ```
 from zort.object import load_objects
