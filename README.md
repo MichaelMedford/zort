@@ -104,9 +104,8 @@ def my_interesting_filter(obj):
 ```
 
 When a lightcurve file is looped over, it returns each object in the lightcurve
-file. The buffer_position should be saved for interesting objects as this is 
-the unique identifier for each object. Saving this identifier, instead of the 
-object ID, allows for O(1) retrieval of the lightcurve.
+file. Interesting objects can be gathered into a list and saved to disk using the 
+```save_objects``` function.
 ```
 filename = 'field000245_ra357.03053to5.26702_dec-27.96964to-20.4773.txt'
 interesting_objects = []
@@ -114,15 +113,19 @@ interesting_objects = []
 from zort.lightcurveFile import LightcurveFile
 for obj in LightcurveFile(filename):
     if my_interesting_filter(obj):
-        interesting_objects.append(obj.buffer_position)
+        interesting_objects.append(obj)
+       
+from zort.objcet import save_obejcts
+save_objects('objects.list', interesting_objects)
 ```
 
-Objects and their lightcurves can be retrieved by instantiating an Object with 
-the lightcurve filename and the object's buffer_position.
+Objects and their lightcurves can be retrieved from a saved list by using the 
+```load_objects``` function. Each object comes loaded with it's metadata and 
+lightcurve, easily previewed by printing the object and lightcurve attribute. 
 ```
-from zort.object import Object
-for buffer_position in interesting_objects:
-    obj = Object(filename, buffer_position)
+from zort.object import load_objects
+interesting_objects = load_objects('objects.list')
+for obj in interesting_objects:
     print(obj)
     print(obj.lightcurve)
 ``` 
