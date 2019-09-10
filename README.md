@@ -229,3 +229,6 @@ cand be generated using the ```obj.plot_lightcurves()``` method.
 
 ## Authors
 * Michael Medford <MichaelMedford@berkeley.edu>
+
+## Citation
+[![DOI](https://zenodo.org/badge/200887248.svg)](https://zenodo.org/badge/latestdoi/200887248)
