@@ -52,25 +52,38 @@ class LightcurveFile:
         print(obj.lightcurve)
     """
 
-    def __init__(self, filename, init_buffer_position=56):
+    def __init__(self, filename, init_buffer_position=56,
+                 proc_rank=0, proc_size=1):
         self.filename = self._set_filename(filename)
         self.objects_filename = self.return_objects_filename()
         self.init_buffer_position = init_buffer_position
         self.objects_file = self.return_objects_file()
         self.rcid_map = self.load_rcid_map()
+        self.proc_rank = proc_rank
+        self.proc_size = proc_size
+        self.objects_file_counter = 0
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        line = self.objects_file.readline()
+        while self.objects_file_counter % self.proc_size != self.proc_rank:
+            line = self._return_objects_file_line()
+            if line == '':
+                raise StopIteration
+
+        line = self._return_objects_file_line()
         if line == '':
             raise StopIteration
-        else:
-            return self.return_object(line)
+        return self.return_object(line)
 
     def __exit__(self):
         self.objects_file.close()
+
+    def _return_objects_file_line(self):
+        line = self.objects_file.readline()
+        self.objects_file_counter += 1
+        return line
 
     def _return_parsed_line(self, line):
         return line.replace('\n', '').split(',')
