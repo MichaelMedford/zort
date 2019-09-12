@@ -141,6 +141,9 @@ comm = MPI.COMM_WORLD
 rank = comm.rank
 size = comm.size
 
+filename = 'lightcurve_file_example.txt'
+interesting_objects = []
+
 from zort.lightcurveFile import LightcurveFile
 for obj in LightcurveFile(filename, proc_rank=rank, proc_size=size):
     if my_interesting_filter(obj):
