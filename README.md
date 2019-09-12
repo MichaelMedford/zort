@@ -107,7 +107,7 @@ When a lightcurve file is looped over, it returns each object in the lightcurve
 file. Interesting objects can be gathered into a list and saved to disk using the 
 ```save_objects``` function.
 ```
-filename = 'field000245_ra357.03053to5.26702_dec-27.96964to-20.4773.txt'
+filename = 'lightcurve_file_example.txt'
 interesting_objects = []
 
 from zort.lightcurveFile import LightcurveFile
@@ -115,7 +115,7 @@ for obj in LightcurveFile(filename):
     if my_interesting_filter(obj):
         interesting_objects.append(obj)
        
-from zort.objcet import save_obejcts
+from zort.objcet import save_objects
 save_objects('objects.list', interesting_objects)
 ```
 
@@ -130,7 +130,33 @@ for obj in interesting_objects:
     print(obj.lightcurve)
 ``` 
 
-### Matching multiple  colors for an object
+Objects can also be extracted in parallel by instantiating the LightcurveFile 
+class with a rank and size. This could be done through mpi4py, or other 
+parallelization packages. The LightcurveFile class simply needs to be told 
+the rank of the parallel process and the total number, or size, of the parallel
+processes. 
+```
+from mpi4py import MPI
+comm = MPI.COMM_WORLD
+rank = comm.rank
+size = comm.size
+
+from zort.lightcurveFile import LightcurveFile
+for obj in LightcurveFile(filename, proc_rank=rank, proc_size=size):
+    if my_interesting_filter(obj):
+        interesting_objects.append(obj)
+       
+from zort.object import save_objects
+save_objects('objects.%i.list' % rank, interesting_objects)
+```
+
+Setting the ```proc_rank``` and ```proc_size``` parameters will cause the 
+iterator to uniquely send different objects to each parallel process without 
+loading all of the objects into memory for each process. This allows for 
+applying a filter to all of the objects in a lightcurve file without 
+overloading memory.
+
+### Matching multiple colors for an object
 
 Each object is defined as a spatially coincidence series of observations that 
 share a (1) ZTF observation field ID, (2) CCD readout channel, and (3) 

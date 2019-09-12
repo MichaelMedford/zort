@@ -32,12 +32,12 @@ class LightcurveFile:
     The Object class (object.py) and the Lightcurve class (lightcurve.py) list
     out the attributes that can be run through the filter. These attributes
     include the object's number of epochs, filter, and sky location. Filters
-    will almost certainly want to filter ont he object's lightcurve, which
-    contains the observations dates, magnitudes and magnitude errors.
+    will almost certainly want to filter on the object's lightcurve, which
+    contains the observation dates, magnitudes and magnitude errors.
 
     EXAMPLE 1:
 
-    filename = 'field000245_ra357.03053to5.26702_dec-27.96964to-20.4773.txt'
+    filename = 'lightcurve_file_example.txt'
     interesting_objects = []
 
     from zort.lightcurveFile import LightcurveFile
@@ -56,7 +56,21 @@ class LightcurveFile:
 
     EXAMPLE 2:
 
+    from mpi4py import MPI
+    comm = MPI.COMM_WORLD
+    rank = comm.rank
+    size = comm.size
 
+    filename = 'lightcurve_file_example.txt'
+    interesting_objects = []
+
+    from zort.lightcurveFile import LightcurveFile
+    for obj in LightcurveFile(filename, proc_rank=rank, proc_size=size):
+        if my_interesting_filter(obj):
+            interesting_objects.append(obj)
+
+    from zort.object import save_objects
+    save_objects('objects.%i.list' % rank, interesting_objects)
     """
 
     def __init__(self, filename, init_buffer_position=56,
