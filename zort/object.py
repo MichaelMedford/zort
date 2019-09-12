@@ -32,6 +32,8 @@ class Object:
 
     def __init__(self, filename, buffer_position):
         self.filename = self._set_filename(filename)
+        if self.filename is None:
+            raise FileNotFoundError(filename)
         self.buffer_position = int(buffer_position)
         params = self._load_params()
         self.objectid = params['objectid']
@@ -64,15 +66,16 @@ class Object:
         except AttributeError:
             pass
 
-        return filename
+        filename = os.path.abspath(filename)
+
+        if os.path.exists(filename):
+            return filename
+        else:
+            return None
 
     def _load_params(self):
-        # Attempt to open file containing the parameters
-        try:
-            file = open(self.filename, 'r')
-        except FileNotFoundError as e:
-            print(e)
-            return None
+        # Open lightcurve file
+        file = open(self.filename, 'r')
 
         # Jump to the location of the object in the lightcurve file
         file.seek(self.buffer_position)
