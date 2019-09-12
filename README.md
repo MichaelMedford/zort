@@ -57,7 +57,8 @@ ascension and declination) and colors (g-band and R-band).
 include dates, magnitudes and magnitude errors.
 - **rcid map**: Information on the organization of the lightcurve files 
 required for faster object access.
-- **sibling**: A spatially coincident source in a different color.
+- **sibling**: A spatially coincident object in a different color 
+originating from the same astrophysical source.
 
 ### Initialization
 
@@ -115,7 +116,7 @@ for obj in LightcurveFile(filename):
     if my_interesting_filter(obj):
         interesting_objects.append(obj)
        
-from zort.objcet import save_objects
+from zort.object import save_objects
 save_objects('objects.list', interesting_objects)
 ```
 
@@ -196,7 +197,7 @@ Locating sibling for ZTF Object 245101100000025
 ---- Sibling saved
 ```  
 
-The sibling is saved in a **.siblings** file that can be later recalled. This 
+The sibling is saved in a ```*.siblings``` file that can be later recalled. This 
 was the first time that a sibling was located for this lightcurve file and 
 therefore a new sibling file was generated. Now that the sibling has been 
 located, running
@@ -258,3 +259,6 @@ cand be generated using the ```obj.plot_lightcurves()``` method.
 
 ## Authors
 * Michael Medford <MichaelMedford@berkeley.edu>
+
+## Citation
+[![DOI](https://zenodo.org/badge/200887248.svg)](https://zenodo.org/badge/latestdoi/200887248)
