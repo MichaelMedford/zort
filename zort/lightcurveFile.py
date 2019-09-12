@@ -35,21 +35,28 @@ class LightcurveFile:
     will almost certainly want to filter ont he object's lightcurve, which
     contains the observations dates, magnitudes and magnitude errors.
 
-    EXAMPLE:
+    EXAMPLE 1:
 
     filename = 'field000245_ra357.03053to5.26702_dec-27.96964to-20.4773.txt'
+    interesting_objects = []
 
     from zort.lightcurveFile import LightcurveFile
-    interesting_objects = []
-    for obj in LightcurveFile(filename, nepochs_cut=10):
+    for obj in LightcurveFile(filename):
         if my_interesting_filter(obj):
-            interesting_objects.append(obj.buffer_position)
+            interesting_objects.append(obj)
 
-    from zort.object import Object
-    for buffer_position in interesting_objects:
-        obj = Object(filename, buffer_position)
+    from zort.objcet import save_obejcts
+    save_objects('objects.list', interesting_objects)
+
+    from zort.object import load_objects
+    interesting_objects = load_objects('objects.list')
+    for obj in interesting_objects:
         print(obj)
         print(obj.lightcurve)
+
+    EXAMPLE 2:
+
+
     """
 
     def __init__(self, filename, init_buffer_position=56,
