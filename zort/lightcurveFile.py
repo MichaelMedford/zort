@@ -37,7 +37,7 @@ class LightcurveFile:
 
     EXAMPLE 1:
 
-    filename = 'lightcurve_file_example.txt'
+    filename = 'field000000_lightcurve_file_example.txt'
     interesting_objects = []
 
     from zort.lightcurveFile import LightcurveFile
@@ -61,7 +61,7 @@ class LightcurveFile:
     rank = comm.rank
     size = comm.size
 
-    filename = 'lightcurve_file_example.txt'
+    filename = 'field000000_lightcurve_file_example.txt'
     interesting_objects = []
 
     from zort.lightcurveFile import LightcurveFile
