@@ -6,9 +6,10 @@ Lightcurve class. Typically this class will be instantiated as an attribute of
 an Object class.
 """
 
-from zort.photometry import magnitudes_to_fluxes
 import numpy as np
 import os
+from zort.photometry import magnitudes_to_fluxes
+from zort.utils import return_filename
 
 
 ################################
@@ -25,9 +26,9 @@ class Lightcurve:
     """
 
     def __init__(self, filename, buffer_position, apply_mask=True):
-        self.filename = self._set_filename(filename)
-        if self.filename is None:
-            raise FileNotFoundError(filename)
+        # Load filenames and check for existence
+        self.filename = return_filename(filename)
+
         self.buffer_position = buffer_position
         self.object_id = None  # set in self._load_lightcurve
         data = self._load_lightcurve(apply_mask=apply_mask)
@@ -51,19 +52,6 @@ class Lightcurve:
 
         return title
 
-    def _set_filename(self, filename):
-        try:
-            filename = filename.decode()
-        except AttributeError:
-            pass
-
-        filename = os.path.abspath(filename)
-
-        if os.path.exists(filename):
-            return filename
-        else:
-            return None
-
     def _load_lightcurve(self, apply_mask=True):
         """
         Loads the lightcurve from a lightcurve file, starting at the location
@@ -71,14 +59,10 @@ class Lightcurve:
         a 'carflag' != 0, following the recommendation of the ZTF Public Data
         Release website.
         """
-        # Attempt to open file containing the lightcurve
-        try:
-            file = open(self.filename, 'r')
-        except FileNotFoundError as e:
-            print(e)
-            return None
 
+        # Open file containing the lightcurve
         # Jump to the location of the object in the lightcurve file
+        file = open(self.filename, 'r')
         file.seek(self.buffer_position)
         line = file.readline()
         self.object_id = int(line.split()[1:][0])

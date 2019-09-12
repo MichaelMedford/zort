@@ -6,9 +6,11 @@ iteration through a lightcurve file in order to inspect each object's
 lightcurve. Filters can be applied to objects and/or lightcurves.
 """
 
-import os
 import pickle
 from zort.object import Object
+from zort.utils import return_filename
+from zort.utils import return_objects_filename
+from zort.utils import return_rcid_map_filename
 
 
 ################################
@@ -75,8 +77,11 @@ class LightcurveFile:
 
     def __init__(self, filename, init_buffer_position=56,
                  proc_rank=0, proc_size=1):
-        self.filename = self._set_filename(filename)
-        self.objects_filename = self.return_objects_filename()
+        # Load filenames and check for existence
+        self.filename = return_filename(filename)
+        self.objects_filename = return_objects_filename(filename)
+        self.rcid_map_filename = return_rcid_map_filename(filename)
+
         self.init_buffer_position = init_buffer_position
         self.objects_file = self.return_objects_file()
         self.rcid_map = self.load_rcid_map()
@@ -109,11 +114,14 @@ class LightcurveFile:
     def _return_parsed_line(self, line):
         return line.replace('\n', '').split(',')
 
-    def _set_filename(self, filename):
+    def return_filename(self, filename):
         try:
             filename = filename.decode()
         except AttributeError:
             pass
+
+        if filename is None:
+            raise FileNotFoundError(filename)
 
         return filename
 
@@ -122,27 +130,12 @@ class LightcurveFile:
         return Object(self.filename, buffer_position)
 
     def return_objects_file(self):
-        # Attempt to open file containing the lightcurve
-        try:
-            file = open(self.objects_filename, 'r')
-        except FileNotFoundError as e:
-            print(e)
-            return None
+        file = open(self.objects_filename, 'r')
         file.seek(self.init_buffer_position)
         return file
 
-    def return_objects_filename(self):
-        objects_filename = self.filename.replace('.txt', '.objects')
-        return objects_filename
-
     def load_rcid_map(self):
-        # Attempt to locate the rcid map for this object's file
-        rcid_map_filename = self.filename.replace('.txt', '.rcid_map')
-        if not os.path.exists(rcid_map_filename):
-            print('** rcid_map missing! **')
-            return None
-
-        rcid_map = pickle.load(open(rcid_map_filename, 'rb'))
+        rcid_map = pickle.load(open(self.rcid_map_filename, 'rb'))
         return rcid_map
 
     def locate_objects_by_radec(self, ra, dec, rcid, radius=3.):

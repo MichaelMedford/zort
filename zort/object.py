@@ -13,6 +13,9 @@ import numpy as np
 import portalocker as portalocker
 import matplotlib.pyplot as plt
 from zort.lightcurve import Lightcurve
+from zort.utils import return_filename
+from zort.utils import return_objects_filename
+from zort.utils import return_rcid_map_filename
 
 
 ################################
@@ -31,9 +34,11 @@ class Object:
     """
 
     def __init__(self, filename, buffer_position):
-        self.filename = self._set_filename(filename)
-        if self.filename is None:
-            raise FileNotFoundError(filename)
+        # Load filenames and check for existence
+        self.filename = return_filename(filename)
+        self.objects_filename = return_objects_filename(filename)
+        self.rcid_map_filename = return_rcid_map_filename(filename)
+
         self.buffer_position = int(buffer_position)
         params = self._load_params()
         self.objectid = params['objectid']
@@ -54,24 +59,11 @@ class Object:
         title = 'Filename: %s\n' % self.filename.split('/')[-1]
         title += 'Buffer Position: %i\n' % self.buffer_position
         title += 'Object ID: %i\n' % self.objectid
-        title += 'Color: %s\n' % self.color
+        title += 'Filter ID: %i | Color: %s\n' % (self.filterid, self.color)
         title += 'Ra/Dec: (%.5f, %.5f)\n' % (self.ra, self.dec)
         title += '%i Epochs passing quality cuts\n' % self.lightcurve.nepochs
 
         return title
-
-    def _set_filename(self, filename):
-        try:
-            filename = filename.decode()
-        except AttributeError:
-            pass
-
-        filename = os.path.abspath(filename)
-
-        if os.path.exists(filename):
-            return filename
-        else:
-            return None
 
     def _load_params(self):
         # Open lightcurve file
@@ -101,17 +93,9 @@ class Object:
             return 'r'
 
     def load_rcid_map(self):
-        # Attempt to locate the rcid map for this object's file
-        rcid_map_filename = self.filename.replace('.txt', '.rcid_map')
-        if not os.path.exists(rcid_map_filename):
-            print('** rcid_map missing! **')
-            return 1
-
-        self.rcid_map = pickle.load(open(rcid_map_filename, 'rb'))
-
-    def return_objects_filename(self):
-        objects_filename = self.filename.replace('.txt', '.objects')
-        return objects_filename
+        rcid_map_filename = self.rcid_map_filename
+        rcid_map = pickle.load(open(rcid_map_filename, 'rb'))
+        return rcid_map
 
     def return_sibling_filename(self):
         sibling_filename = self.filename.replace('.txt', '.siblings')
@@ -223,9 +207,7 @@ class Object:
                 return
 
         if self.rcid_map is None:
-            status = self.load_rcid_map()
-            if status == 1:
-                return
+            self.rcid_map = self.load_rcid_map()
 
         # Searching for sibling in the opposite filtered section of
         # the rcid_map
@@ -236,14 +218,9 @@ class Object:
             filterid = 1
         rcid = self.rcid
 
-        objects_filename = self.return_objects_filename()
-        if not os.path.exists(objects_filename):
-            print('** objects file missing! **')
-            return 1
-
         try:
             buffer_start, buffer_end = self.rcid_map[filterid][rcid]
-        except TypeError:
+        except KeyError:
             print('** rcid_map missing filterid %i rcid %i ! **' % (filterid,
                                                                     rcid))
             return 1
@@ -251,7 +228,7 @@ class Object:
         print('-- Searching between buffers %i and %i' % (
             buffer_start, buffer_end))
 
-        objects_fileobj = open(objects_filename, 'r')
+        objects_fileobj = open(self.objects_filename, 'r')
         objects_fileobj.seek(buffer_start)
 
         sibling_buffer_position = None
@@ -265,7 +242,7 @@ class Object:
                 break
 
             # Check for end of rcid section of the file
-            if object_buffer_position >= buffer_end:
+            if object_buffer_position > buffer_end:
                 break
 
             data = line.replace('\n', '').split(',')
