@@ -10,7 +10,7 @@ locate_sibling function.
 import os
 import pickle
 import numpy as np
-import portalocker as portalocker
+import fasteners
 import matplotlib.pyplot as plt
 from zort.lightcurve import Lightcurve
 from zort.utils import return_filename
@@ -101,6 +101,11 @@ class Object:
         sibling_filename = self.filename.replace('.txt', '.siblings')
         return sibling_filename
 
+    def return_sibling_lockname(self):
+        sibling_filename = self.return_sibling_filename()
+        lockname = sibling_filename + '.lock'
+        return lockname
+
     def _load_lightcurve(self):
         return Lightcurve(self.filename, self.lightcurve_position)
 
@@ -120,17 +125,18 @@ class Object:
             return 1
 
         filename = self.return_sibling_filename()
+        lockname = self.return_sibling_lockname()
 
-        # Portalocker guarantees that if parallel processes are attempting to
-        # write siblings to the sibling file that they will not collide with
-        # each other. While this append is occuring the file is locked from
-        # any process that attempts to open it with portalocker. Attempts to
-        # open the file without portalocker will still success but could cause
-        # a collision.
-        with portalocker.Lock(filename, 'a', timeout=60) as f:
+        lock = fasteners.InterProcessLock(lockname)
+        while not lock.aquired():
+            lock.acquire()
+
+        with open(filename, 'a') as f:
             f.write('%s,%s,%.1f\n' % (self.lightcurve_position,
                                       self.sibling.lightcurve_position,
                                       self.sibling_tol_as))
+
+        lock.release()
 
         if printFlag:
             print('---- Sibling saved')
