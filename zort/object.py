@@ -10,7 +10,6 @@ locate_sibling function.
 import os
 import pickle
 import numpy as np
-import fasteners
 import matplotlib.pyplot as plt
 from zort.lightcurve import Lightcurve
 from zort.utils import return_filename
@@ -101,74 +100,8 @@ class Object:
         sibling_filename = self.filename.replace('.txt', '.siblings')
         return sibling_filename
 
-    def return_sibling_lockname(self):
-        sibling_filename = self.return_sibling_filename()
-        lockname = sibling_filename + '.lock'
-        return lockname
-
     def _load_lightcurve(self):
         return Lightcurve(self.filename, self.lightcurve_position)
-
-    def return_sibling_file_status(self):
-        # Attempt to locate the sibling file for this object's file
-        filename = self.return_sibling_filename()
-        if not os.path.exists(filename):
-            print('** sibling file missing! **')
-            return False
-        else:
-            return True
-
-    def save_sibling(self, printFlag=False):
-        # Can only save a sibling is one is already assigned to this object
-        if self.sibling is None:
-            print('** sibling not set! **')
-            return 1
-
-        filename = self.return_sibling_filename()
-        lockname = self.return_sibling_lockname()
-
-        lock = fasteners.InterProcessLock(lockname)
-        while not lock.aquired():
-            lock.acquire()
-
-        with open(filename, 'a') as f:
-            f.write('%s,%s,%.1f\n' % (self.lightcurve_position,
-                                      self.sibling.lightcurve_position,
-                                      self.sibling_tol_as))
-
-        lock.release()
-
-        if printFlag:
-            print('---- Sibling saved')
-
-    def load_sibling(self, printFlag=False):
-        # Attempt to locate the sibling file for this object's file
-        if not self.return_sibling_file_status():
-            return 1
-
-        filename = self.return_sibling_filename()
-
-        if printFlag:
-            print('-- Loading sibling...')
-
-        # Loop through the sibling file until the object is located
-        sibling_lightcurve_position = None
-        for line in open(filename, 'r'):
-            line_split = line.replace('\n', '').split(',')
-            if int(line_split[0]) == self.lightcurve_position:
-                sibling_lightcurve_position = int(line_split[1])
-                break
-
-        if sibling_lightcurve_position is None:
-            if printFlag:
-                print('-- Sibling could not be loaded')
-            return 1
-
-        # Assign the sibling to its own object instance
-        self.sibling = Object(self.filename, sibling_lightcurve_position)
-        if printFlag:
-            print('-- Sibling loaded!')
-        return 0
 
     def set_sibling(self, sibling_lightcurve_position, printFlag=False):
         # Assign the sibling to its own object instance
@@ -180,8 +113,6 @@ class Object:
         if printFlag:
             print('---- Original Color: %i | Sibling Color: %i' % (
                 self.filterid, self.sibling.filterid))
-
-        self.save_sibling(printFlag=printFlag)
 
     def test_radec(self, ra, dec):
         # See if the data is close enough to the object to be the
@@ -208,16 +139,11 @@ class Object:
         else:
             return 0
 
-    def locate_sibling(self, attempt_to_load=True, printFlag=False):
+    def locate_sibling(self, printFlag=False):
         #
         if printFlag:
             print('Locating sibling for ZTF Object %i' % self.objectid)
             print('-- Object location: %.5f, %.5f ...' % (self.ra, self.dec))
-
-        if attempt_to_load:
-            status = self.load_sibling(printFlag=printFlag)
-            if status == 0:
-                return
 
         if self.rcid_map is None:
             self.rcid_map = self.load_rcid_map()

@@ -237,12 +237,7 @@ Ra/Dec: (4.74851, -26.23581)
 
 The default tolerance for matching two objecs as siblings is is 2.0". However 
 this can be altered by changing ```obj.sibling_tol_as``` prior to runnning
-```obj.locate_sibling()``` for the first time.
-
-Siblings are saved to and read from sibling files using the ```portalocker``` 
-package, locking sibling files from simultaneous reading and writing. This 
-guarantees that sibling files will not become corrupted if multiple parallel 
-processes are attempting to save siblings to a sibling file simultaneously.  
+```obj.locate_sibling()``` for the first time.  
 
 ### Plotting lightcurves
 
