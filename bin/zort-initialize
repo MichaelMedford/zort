@@ -49,8 +49,6 @@ def generate_objects_file(lightcurve_file):
 
     f_in.close()
 
-    return objects_file
-
 
 def save_rcid_map(DR1_object_file, rcid_map):
     rcid_map_filename = DR1_object_file.replace('.objects', '.rcid_map')
@@ -73,7 +71,9 @@ def return_rcid_map_filesize(rcid_map):
     return rcid_map_filesize
 
 
-def generate_rcid_map(objects_file):
+def generate_rcid_map(lightcurve_file):
+    objects_file = lightcurve_file.replace('.txt', '.objects')
+
     f_in = open(objects_file, 'r')
     _ = f_in.readline()  # skip past the header
 
@@ -168,8 +168,8 @@ def main():
               'for %i lightcurve files' % len(
             lightcurve_files))
         for lightcurve_file in lightcurve_files:
-            objects_file = generate_objects_file(lightcurve_file)
-            generate_rcid_map(objects_file)
+            generate_objects_file(lightcurve_file)
+            generate_rcid_map(lightcurve_file)
 
 
 if __name__ == '__main__':
