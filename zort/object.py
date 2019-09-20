@@ -33,13 +33,13 @@ class Object:
     coincident objects with the locate_sibling function.
     """
 
-    def __init__(self, filename, buffer_position):
+    def __init__(self, filename, lightcurve_position):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
         self.objects_filename = return_objects_filename(filename)
         self.rcid_map_filename = return_rcid_map_filename(filename)
 
-        self.buffer_position = int(buffer_position)
+        self.lightcurve_position = int(lightcurve_position)
         params = self._load_params()
         self.objectid = params['objectid']
         self.nepochs = params['nepochs']
@@ -57,7 +57,7 @@ class Object:
 
     def __repr__(self):
         title = 'Filename: %s\n' % self.filename.split('/')[-1]
-        title += 'Buffer Position: %i\n' % self.buffer_position
+        title += 'Lightcurve Buffer Position: %i\n' % self.lightcurve_position
         title += 'Object ID: %i\n' % self.objectid
         title += 'Filter ID: %i | Color: %s\n' % (self.filterid, self.color)
         title += 'Ra/Dec: (%.5f, %.5f)\n' % (self.ra, self.dec)
@@ -70,7 +70,7 @@ class Object:
         file = open(self.filename, 'r')
 
         # Jump to the location of the object in the lightcurve file
-        file.seek(self.buffer_position)
+        file.seek(self.lightcurve_position)
 
         line = file.readline()
         params = line.split()[1:]
@@ -102,7 +102,7 @@ class Object:
         return sibling_filename
 
     def _load_lightcurve(self):
-        return Lightcurve(self.filename, self.buffer_position)
+        return Lightcurve(self.filename, self.lightcurve_position)
 
     def return_sibling_file_status(self):
         # Attempt to locate the sibling file for this object's file
@@ -128,8 +128,8 @@ class Object:
         # open the file without portalocker will still success but could cause
         # a collision.
         with portalocker.Lock(filename, 'a', timeout=60) as f:
-            f.write('%s,%s,%.1f\n' % (self.buffer_position,
-                                      self.sibling.buffer_position,
+            f.write('%s,%s,%.1f\n' % (self.lightcurve_position,
+                                      self.sibling.lightcurve_position,
                                       self.sibling_tol_as))
 
         print('---- Sibling saved')
@@ -144,25 +144,25 @@ class Object:
         print('-- Loading sibling...')
 
         # Loop through the sibling file until the object is located
-        sibling_buffer_position = None
+        sibling_lightcurve_position = None
         for line in open(filename, 'r'):
             line_split = line.replace('\n', '').split(',')
-            if int(line_split[0]) == self.buffer_position:
-                sibling_buffer_position = int(line_split[1])
+            if int(line_split[0]) == self.lightcurve_position:
+                sibling_lightcurve_position = int(line_split[1])
                 break
 
-        if sibling_buffer_position is None:
+        if sibling_lightcurve_position is None:
             print('-- Sibling could not be loaded')
             return 1
 
         # Assign the sibling to its own object instance
-        self.sibling = Object(self.filename, sibling_buffer_position)
+        self.sibling = Object(self.filename, sibling_lightcurve_position)
         print('-- Sibling loaded!')
         return 0
 
-    def set_sibling(self, sibling_buffer_position):
+    def set_sibling(self, sibling_lightcurve_position):
         # Assign the sibling to its own object instance
-        self.sibling = Object(self.filename, sibling_buffer_position)
+        self.sibling = Object(self.filename, sibling_lightcurve_position)
 
         print('---- Sibling found at %.5f, %.5f !' % (
             self.sibling.ra, self.sibling.dec))
@@ -231,18 +231,18 @@ class Object:
         objects_fileobj = open(self.objects_filename, 'r')
         objects_fileobj.seek(buffer_start)
 
-        sibling_buffer_position = None
+        sibling_lightcurve_position = None
 
         while True:
             line = objects_fileobj.readline()
-            object_buffer_position = objects_fileobj.tell()
+            object_position = objects_fileobj.tell()
 
             # Check for end of file
             if not line:
                 break
 
             # Check for end of rcid section of the file
-            if object_buffer_position > buffer_end:
+            if object_position > buffer_end:
                 break
 
             data = line.replace('\n', '').split(',')
@@ -254,15 +254,15 @@ class Object:
                 continue
             elif status == 1:
                 # Sibling found!
-                sibling_buffer_position = data[-1]
+                sibling_lightcurve_position = data[-1]
                 break
 
         objects_fileobj.close()
 
-        if sibling_buffer_position is None:
+        if sibling_lightcurve_position is None:
             print('---- No sibling found')
         else:
-            self.set_sibling(sibling_buffer_position)
+            self.set_sibling(sibling_lightcurve_position)
 
     def plot_lightcurve(self, insert_radius=30):
         hmjd_min = np.min(self.lightcurve.hmjd) - 10
@@ -297,7 +297,7 @@ class Object:
         ax[1].set_xlabel('Observation Date')
         ax[1].set_title('%i Days Around Peak' % insert_radius)
 
-        fname = '%s-%i-lc.png' % (self.filename, self.buffer_position)
+        fname = '%s-%i-lc.png' % (self.filename, self.lightcurve_position)
         fig.savefig(fname)
         print('---- Lightcurve saved: %s' % fname)
 
@@ -385,7 +385,7 @@ class Object:
                 ax[1][i].text(0.5, 0.5, error_message)
 
         fname = '%s-%i-lc-with_sibling.png' % (
-            self.filename, self.buffer_position)
+            self.filename, self.lightcurve_position)
         fig.savefig(fname)
         print('---- Lightcurves saved: %s' % fname)
         plt.close(fig)
@@ -400,13 +400,13 @@ def save_objects(filename, objects, overwrite=False):
 
     with open(filename, 'w') as f:
         for obj in objects:
-            f.write('%s,%i\n' % (obj.filename, obj.buffer_position))
+            f.write('%s,%i\n' % (obj.filename, obj.lightcurve_position))
 
 
 def load_objects(filename):
     objects = []
     for line in open(filename, 'r'):
-        filename, buffer_position = line.replace('\n', '').split(',')
-        objects.append(Object(filename, buffer_position))
+        filename, lightcurve_position = line.replace('\n', '').split(',')
+        objects.append(Object(filename, lightcurve_position))
 
     return objects

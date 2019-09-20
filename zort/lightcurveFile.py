@@ -24,7 +24,7 @@ class LightcurveFile:
     ZTF objects are stored in lightcurve files. This class allows for
     iteration through a lightcurve file in order to inspect each object's
     lightcurve. The user can select to start looping through the file at a
-    specific buffer position.
+    specific object position.
 
     LightcurveFile should be used as an iterator to loop over all of the
     objects in the lightcurve file. Here is an example for how to
@@ -75,14 +75,14 @@ class LightcurveFile:
     save_objects('objects.%i.list' % rank, interesting_objects)
     """
 
-    def __init__(self, filename, init_buffer_position=56,
+    def __init__(self, filename, init_object_position=56,
                  proc_rank=0, proc_size=1):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
         self.objects_filename = return_objects_filename(filename)
         self.rcid_map_filename = return_rcid_map_filename(filename)
 
-        self.init_buffer_position = init_buffer_position
+        self.init_object_position = init_object_position
         self.objects_file = self.return_objects_file()
         self.rcid_map = self.load_rcid_map()
         self.proc_rank = proc_rank
@@ -126,12 +126,12 @@ class LightcurveFile:
         return filename
 
     def return_object(self, line):
-        buffer_position = self._return_parsed_line(line)[-1]
-        return Object(self.filename, buffer_position)
+        lightcurve_position = self._return_parsed_line(line)[-1]
+        return Object(self.filename, lightcurve_position)
 
     def return_objects_file(self):
         file = open(self.objects_filename, 'r')
-        file.seek(self.init_buffer_position)
+        file.seek(self.init_object_position)
         return file
 
     def load_rcid_map(self):
@@ -141,10 +141,10 @@ class LightcurveFile:
     def locate_objects_by_radec(self, ra, dec, rcid, radius=3.):
         objects = []
         for fid in [1, 2]:
-            buffer_start, buffer_end = self.rcid_map[fid][rcid]
-            self.objects_file.seek(buffer_start)
-            buffer_location = self.objects_file.tell()
-            while buffer_location < buffer_end:
+            location_start, location_end = self.rcid_map[fid][rcid]
+            self.objects_file.seek(location_start)
+            object_location = self.objects_file.tell()
+            while object_location < location_end:
                 line = self.objects_file.readline()
                 if line == '':
                     break
@@ -153,5 +153,5 @@ class LightcurveFile:
                     object.sibling_tol_as = radius
                     if object.test_radec(ra, dec):
                         objects.append(object)
-                buffer_location = self.objects_file.tell()
+                object_location = self.objects_file.tell()
         return objects

@@ -24,7 +24,7 @@ def generate_objects_file(lightcurve_file):
     f_in = open(lightcurve_file, 'r')
 
     object_keys = ['id', 'nepochs', 'filterid',
-                   'fieldid', 'rcid', 'ra', 'dec', 'buffer_position']
+                   'fieldid', 'rcid', 'ra', 'dec', 'lightcurve_position']
 
     objects_file = lightcurve_file.replace('.txt', '.objects')
     with open(objects_file, 'w') as f_out:
@@ -44,8 +44,8 @@ def generate_objects_file(lightcurve_file):
             data = line.replace('\n', '').split()[1:]
             data_str = ','.join(data)
 
-            buffer_position = f_in.tell() - len(line)
-            f_out.write('%s,%i\n' % (data_str, buffer_position))
+            lightcurve_position = f_in.tell() - len(line)
+            f_out.write('%s,%i\n' % (data_str, lightcurve_position))
 
     f_in.close()
 
@@ -79,19 +79,19 @@ def generate_rcid_map(objects_file):
 
     rcid, rcid_current = None, None
     filterid, filterid_current = None, None
-    buffer_location_start = None
+    object_location_start = None
     rcid_map = dict()
     rcid_map[1] = dict()
     rcid_map[2] = dict()
 
     while True:
         line = f_in.readline()
-        buffer_location_current = f_in.tell() - len(line)
+        object_location_current = f_in.tell() - len(line)
 
         # Check for end of the file
         if not line:
             rcid_map[filterid_current][rcid_current] = (
-                buffer_location_start, buffer_location_current)
+                object_location_start, object_location_current)
             break
 
         line_split = line.split(',')
@@ -100,15 +100,15 @@ def generate_rcid_map(objects_file):
 
         # Initialize the rcid
         if rcid_current is None:
-            buffer_location_start = buffer_location_current
+            object_location_start = object_location_current
             rcid_current = rcid
             filterid_current = filterid
 
         # Check to see if the block has switched
         if rcid != rcid_current:
             rcid_map[filterid_current][rcid_current] = (
-                buffer_location_start, buffer_location_current)
-            buffer_location_start = buffer_location_current
+                object_location_start, object_location_current)
+            object_location_start = object_location_current
             rcid_current = rcid
             filterid_current = filterid
 

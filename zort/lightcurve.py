@@ -25,11 +25,11 @@ class Lightcurve:
     of an Object class.
     """
 
-    def __init__(self, filename, buffer_position, apply_mask=True):
+    def __init__(self, filename, lightcurve_position, apply_mask=True):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
 
-        self.buffer_position = buffer_position
+        self.lightcurve_position = lightcurve_position
         self.object_id = None  # set in self._load_lightcurve
         data = self._load_lightcurve(apply_mask=apply_mask)
         self.hmjd = data['hmjd']
@@ -63,7 +63,7 @@ class Lightcurve:
         # Open file containing the lightcurve
         # Jump to the location of the object in the lightcurve file
         file = open(self.filename, 'r')
-        file.seek(self.buffer_position)
+        file.seek(self.lightcurve_position)
         line = file.readline()
         self.object_id = int(line.split()[1:][0])
 
@@ -114,13 +114,13 @@ def save_lightcurves(filename, lightcurves, overwrite=False):
     with open(filename, 'w') as f:
         for lightcurve in lightcurves:
             f.write('%s,%i\n' % (lightcurve.filename,
-                                 lightcurve.buffer_position))
+                                 lightcurve.lightcurve_position))
 
 
 def load_lightcurves(filename):
     lightcurves = []
     for line in open(filename, 'r'):
-        filename, buffer_position = line.replace('\n', '').split(',')
-        lightcurves.append(Lightcurve(filename, buffer_position))
+        filename, lightcurve_position = line.replace('\n', '').split(',')
+        lightcurves.append(Lightcurve(filename, lightcurve_position))
 
     return lightcurves
