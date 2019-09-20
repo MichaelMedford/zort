@@ -113,7 +113,7 @@ class Object:
         else:
             return True
 
-    def save_sibling(self):
+    def save_sibling(self, printFlag=False):
         # Can only save a sibling is one is already assigned to this object
         if self.sibling is None:
             print('** sibling not set! **')
@@ -132,16 +132,18 @@ class Object:
                                       self.sibling.lightcurve_position,
                                       self.sibling_tol_as))
 
-        print('---- Sibling saved')
+        if printFlag:
+            print('---- Sibling saved')
 
-    def load_sibling(self):
+    def load_sibling(self, printFlag=False):
         # Attempt to locate the sibling file for this object's file
         if not self.return_sibling_file_status():
             return 1
 
         filename = self.return_sibling_filename()
 
-        print('-- Loading sibling...')
+        if printFlag:
+            print('-- Loading sibling...')
 
         # Loop through the sibling file until the object is located
         sibling_lightcurve_position = None
@@ -152,24 +154,28 @@ class Object:
                 break
 
         if sibling_lightcurve_position is None:
-            print('-- Sibling could not be loaded')
+            if printFlag:
+                print('-- Sibling could not be loaded')
             return 1
 
         # Assign the sibling to its own object instance
         self.sibling = Object(self.filename, sibling_lightcurve_position)
-        print('-- Sibling loaded!')
+        if printFlag:
+            print('-- Sibling loaded!')
         return 0
 
-    def set_sibling(self, sibling_lightcurve_position):
+    def set_sibling(self, sibling_lightcurve_position, printFlag=False):
         # Assign the sibling to its own object instance
         self.sibling = Object(self.filename, sibling_lightcurve_position)
 
-        print('---- Sibling found at %.5f, %.5f !' % (
-            self.sibling.ra, self.sibling.dec))
-        print('---- Original Color: %i | Sibling Color: %i' % (
-            self.filterid, self.sibling.filterid))
+        if printFlag:
+            print('---- Sibling found at %.5f, %.5f !' % (
+                self.sibling.ra, self.sibling.dec))
+        if printFlag:
+            print('---- Original Color: %i | Sibling Color: %i' % (
+                self.filterid, self.sibling.filterid))
 
-        self.save_sibling()
+        self.save_sibling(printFlag=printFlag)
 
     def test_radec(self, ra, dec):
         # See if the data is close enough to the object to be the
@@ -196,13 +202,14 @@ class Object:
         else:
             return 0
 
-    def locate_sibling(self, attempt_to_load=True):
+    def locate_sibling(self, attempt_to_load=True, printFlag=False):
         #
-        print('Locating sibling for ZTF Object %i' % self.objectid)
-        print('-- Object location: %.5f, %.5f ...' % (self.ra, self.dec))
+        if printFlag:
+            print('Locating sibling for ZTF Object %i' % self.objectid)
+            print('-- Object location: %.5f, %.5f ...' % (self.ra, self.dec))
 
         if attempt_to_load:
-            status = self.load_sibling()
+            status = self.load_sibling(printFlag=printFlag)
             if status == 0:
                 return
 
@@ -225,8 +232,9 @@ class Object:
                                                                     rcid))
             return 1
 
-        print('-- Searching between buffers %i and %i' % (
-            buffer_start, buffer_end))
+        if printFlag:
+            print('-- Searching between buffers %i and %i' % (buffer_start,
+                                                              buffer_end))
 
         objects_fileobj = open(self.objects_filename, 'r')
         objects_fileobj.seek(buffer_start)
@@ -260,7 +268,8 @@ class Object:
         objects_fileobj.close()
 
         if sibling_lightcurve_position is None:
-            print('---- No sibling found')
+            if printFlag:
+                print('---- No sibling found')
         else:
             self.set_sibling(sibling_lightcurve_position)
 
@@ -302,6 +311,7 @@ class Object:
         print('---- Lightcurve saved: %s' % fname)
 
         plt.close(fig)
+        return fname
 
     def plot_lightcurves(self, insert_radius=30):
         hmjd_min = np.min(self.lightcurve.hmjd) - 10
@@ -388,7 +398,9 @@ class Object:
             self.filename, self.lightcurve_position)
         fig.savefig(fname)
         print('---- Lightcurves saved: %s' % fname)
+
         plt.close(fig)
+        return fname
 
 
 def save_objects(filename, objects, overwrite=False):
