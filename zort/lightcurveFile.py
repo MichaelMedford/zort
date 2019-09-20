@@ -75,7 +75,7 @@ class LightcurveFile:
     save_objects('objects.%i.list' % rank, interesting_objects)
     """
 
-    def __init__(self, filename, init_object_position=56,
+    def __init__(self, filename, init_object_position=60,
                  proc_rank=0, proc_size=1):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
