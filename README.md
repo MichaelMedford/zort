@@ -8,7 +8,7 @@ access the ZTF Public Data Release lightcurves across multiple colors.
 ### ZTF Public Data Release Lightcurves
 
 Instructions for downloading and extracting ZTF Public Data Release Lightcurves 
-can be found at: https://www.ztf.caltech.edu/page/dr1#12c
+can be found at: https://www.ztf.caltech.edu/page/dr2#12c
 
 The ZTF Public Data Release Lightcurves are generated through spatially 
 cross-matching individual epoch photometric catalogs. Catalogs are 
