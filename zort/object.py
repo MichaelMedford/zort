@@ -86,7 +86,7 @@ class Object:
 
     def _return_filterid_color(self):
         # Defined by ZTF convention
-        return filterid_dict[self.fieldid]
+        return filterid_dict[self.filterid]
 
     def load_rcid_map(self):
         rcid_map_filename = self.rcid_map_filename
@@ -108,9 +108,8 @@ class Object:
         if printFlag:
             print('---- Sibling found at %.5f, %.5f !' % (
                 self.siblings.ra, self.siblings.dec))
-        if printFlag:
-            print('---- Original Color: %i | Sibling Color: %i' % (
-                self.filterid, self.siblings.filterid))
+            print('---- Original Color: %s | Sibling Color: %s' % (
+                self.color, self.siblings.color))
 
     def test_radec(self, ra, dec):
         # See if the data is close enough to the object to be the
@@ -152,20 +151,19 @@ class Object:
         rcid = self.rcid
 
         for filterid in sibling_filterids:
+            color = filterid_dict[filterid]
             if filterid not in self.rcid_map:
-                print('-- rcid_map does not contain filter '
-                      '%s' % filterid_dict[fieldid])
+                print('-- rcid_map does not contain filter %s' % color)
                 continue
             elif rcid not in self.rcid_map[filterid]:
-                print('-- rcid_map[%s] does not contain rcid '
-                      '%i' % (filterid_dict[fieldid], rcid))
+                print('-- rcid_map %s does not have rcid %i' % (color, rcid))
                 continue
 
             buffer_start, buffer_end = self.rcid_map[filterid][rcid]
 
             if printFlag:
                 print('-- Searching filter %s between '
-                      'buffers %i and %i' % (filterid_dict[fieldid],
+                      'buffers %i and %i' % (filterid_dict[filterid],
                                              buffer_start, buffer_end))
 
             objects_fileobj = open(self.objects_filename, 'r')
