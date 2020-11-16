@@ -207,12 +207,17 @@ class Object:
         hmjd_min = np.min(self.lightcurve.hmjd) - 10
         hmjd_max = np.max(self.lightcurve.hmjd) + 10
 
+        if self.color == 'i':
+            color = 'k'
+        else:
+            color = self.color
+
         fig, ax = plt.subplots(1, 2, figsize=(12, 4))
         fig.subplots_adjust(hspace=0.4)
 
         ax[0].errorbar(self.lightcurve.hmjd, self.lightcurve.mag,
                        yerr=self.lightcurve.magerr,
-                       ls='none', marker='.', color=self.color)
+                       ls='none', marker='.', color=color)
         ax[0].invert_yaxis()
         ax[0].set_xlim(hmjd_min, hmjd_max)
         ax[0].set_ylabel('Magnitude')
@@ -229,7 +234,7 @@ class Object:
         ax[1].errorbar(self.lightcurve.hmjd[hmjd_cond],
                        self.lightcurve.mag[hmjd_cond],
                        yerr=self.lightcurve.magerr[hmjd_cond],
-                       ls='none', marker='.', color=self.color)
+                       ls='none', marker='.', color=color)
         ax[1].invert_yaxis()
         ax[1].set_xlim(hmjd_min_insert, hmjd_max_insert)
         ax[1].set_ylabel('Magnitude')
@@ -260,13 +265,18 @@ class Object:
             N_rows = 3
             figsize_height = 9
 
+        if self.color == 'i':
+            color = 'k'
+        else:
+            color = self.color
+
         fig, ax = plt.subplots(N_rows, 2, figsize=(12, figsize_height))
         fig.subplots_adjust(top=0.92)
         fig.subplots_adjust(hspace=0.4)
 
         ax[0][0].errorbar(self.lightcurve.hmjd, self.lightcurve.mag,
                           yerr=self.lightcurve.magerr,
-                          ls='none', marker='.', color=self.color)
+                          ls='none', marker='.', color=color)
         ax[0][0].invert_yaxis()
         ax[0][0].set_xlim(hmjd_min, hmjd_max)
         ax[0][0].set_ylabel('Magnitude')
@@ -283,7 +293,7 @@ class Object:
         ax[0][1].errorbar(self.lightcurve.hmjd[hmjd_cond],
                           self.lightcurve.mag[hmjd_cond],
                           yerr=self.lightcurve.magerr[hmjd_cond],
-                          ls='none', marker='.', color=self.color)
+                          ls='none', marker='.', color=color)
         ax[0][1].invert_yaxis()
         ax[0][1].set_xlim(hmjd_min_insert, hmjd_max_insert)
         ax[0][1].set_ylabel('Magnitude')
@@ -293,30 +303,34 @@ class Object:
         for i, sibling in enumerate(self.siblings):
             sibling._load_params()
             sibling._load_lightcurve()
+            if sibling.color == 'i':
+                color = 'k'
+            else:
+                color = self.color
 
-            ax[i][0].errorbar(self.siblings.lightcurve.hmjd,
-                              self.siblings.lightcurve.mag,
-                              yerr=self.siblings.lightcurve.magerr,
+            ax[i][0].errorbar(sibling.lightcurve.hmjd,
+                              sibling.lightcurve.mag,
+                              yerr=sibling.lightcurve.magerr,
                               ls='none',
                               marker='.',
-                              color=self.siblings.color)
+                              color=color)
             ax[i][0].invert_yaxis()
             ax[i][0].set_xlim(hmjd_min, hmjd_max)
             ax[i][0].set_ylabel('Magnitude')
             ax[i][0].set_xlabel('Observation Date')
             ax[i][0].set_title('ZTF Object %i '
-                               '(%s band)' % (self.siblings.objectid,
-                                              self.siblings.color))
+                               '(%s band)' % (sibling.objectid,
+                                              sibling.color))
 
-            hmjd_cond = (self.siblings.lightcurve.hmjd >= hmjd_min_insert) & \
-                        (self.siblings.lightcurve.hmjd <= hmjd_max_insert)
+            hmjd_cond = (sibling.lightcurve.hmjd >= hmjd_min_insert) & \
+                        (sibling.lightcurve.hmjd <= hmjd_max_insert)
 
-            ax[i][1].errorbar(self.siblings.lightcurve.hmjd[hmjd_cond],
-                              self.siblings.lightcurve.mag[hmjd_cond],
-                              yerr=self.siblings.lightcurve.magerr[hmjd_cond],
+            ax[i][1].errorbar(sibling.lightcurve.hmjd[hmjd_cond],
+                              sibling.lightcurve.mag[hmjd_cond],
+                              yerr=sibling.lightcurve.magerr[hmjd_cond],
                               ls='none',
                               marker='.',
-                              color=self.siblings.color)
+                              color=color)
             ax[i][1].invert_yaxis()
             ax[i][1].set_xlim(hmjd_min_insert, hmjd_max_insert)
             ax[i][1].set_ylabel('Magnitude')
