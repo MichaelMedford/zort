@@ -102,14 +102,14 @@ class Object:
 
     def set_siblings(self, siblings_lightcurve_position, printFlag=False):
         # Assign the siblings to its own object instance
-        self.siblings.append(Object(self.filename,
-                                    siblings_lightcurve_position))
+        sibling = Object(self.filename, siblings_lightcurve_position)
+        self.siblings.append(sibling)
 
         if printFlag:
             print('---- Sibling found at %.5f, %.5f !' % (
-                self.siblings.ra, self.siblings.dec))
+                sibling.ra, sibling.dec))
             print('---- Original Color: %s | Sibling Color: %s' % (
-                self.color, self.siblings.color))
+                self.color, sibling.color))
 
     def test_radec(self, ra, dec):
         # See if the data is close enough to the object to be the
