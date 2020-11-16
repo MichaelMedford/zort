@@ -201,7 +201,7 @@ class Object:
                 if printFlag:
                     print('---- No siblings found for filter %i' % filterid)
             else:
-                self.set_siblings(siblings_lightcurve_position)
+                self.set_siblings(siblings_lightcurve_position, printFlag)
 
     def plot_lightcurve(self, insert_radius=30):
         hmjd_min = np.min(self.lightcurve.hmjd) - 10
