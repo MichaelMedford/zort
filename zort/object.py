@@ -247,7 +247,7 @@ class Object:
         print('---- Lightcurve saved: %s' % filename)
 
         plt.close(fig)
-        return fname
+        return filename
 
     def plot_lightcurves(self, filename=None, insert_radius=30):
         hmjd_min = np.min(self.lightcurve.hmjd) - 10
@@ -345,7 +345,7 @@ class Object:
         print('---- Lightcurves saved: %s' % filename)
 
         plt.close(fig)
-        return fname
+        return filename
 
 
 def save_objects(filename, objects, overwrite=False):
