@@ -300,13 +300,13 @@ class Object:
         ax[0][1].set_xlabel('Observation Date')
         ax[0][1].set_title('%i Days Around Peak' % insert_radius)
 
-        for i, sibling in enumerate(self.siblings):
+        for i, sibling in enumerate(self.siblings, 1):
             sibling._load_params()
             sibling._load_lightcurve()
             if sibling.color == 'i':
                 color = 'k'
             else:
-                color = self.color
+                color = sibling.color
 
             ax[i][0].errorbar(sibling.lightcurve.hmjd,
                               sibling.lightcurve.mag,
