@@ -242,7 +242,7 @@ class Object:
         ax[1].set_title('%i Days Around Peak' % insert_radius)
 
         fname = '%s-%i-lc.png' % (self.filename, self.lightcurve_position)
-        fig.savefig(fname)
+        fig.savefig(fname, dpi=300, bbox_inches='tight', pad_inches=0.01)
         print('---- Lightcurve saved: %s' % fname)
 
         plt.close(fig)
@@ -339,7 +339,7 @@ class Object:
 
         fname = '%s-%i-lc-with_siblings.png' % (
             self.filename, self.lightcurve_position)
-        fig.savefig(fname)
+        fig.savefig(fname, dpi=300, bbox_inches='tight', pad_inches=0.01)
         print('---- Lightcurves saved: %s' % fname)
 
         plt.close(fig)
