@@ -3,6 +3,7 @@
 zort-initialize :
 Create an objects file and rcip map for all lightcurve files in a directory.
 These initialization files speed up quick reading for zort.
+
 """
 
 import argparse
