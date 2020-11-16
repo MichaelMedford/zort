@@ -5,7 +5,7 @@ Each ZTF object can be represented as an instance of the Object class, along
 with its metadata and lightcurve. Note that each ZTF object is only one color,
 with a different color of the same astrophysical object labelled as a different
 object. This class can find and save spatially coincident objects with the
-locate_sibling function.
+locate_siblings function.
 """
 import os
 import pickle
@@ -29,7 +29,7 @@ class Object:
     along with its parameters and lightcurve. Note that each ZTF object is only
     one color, with a different color from the same astrophysical source
     labelled as a different object. This class can find and save spatially
-    coincident objects with the locate_sibling function.
+    coincident objects with the locate_siblingss function.
     """
 
     def __init__(self, filename, lightcurve_position):
@@ -49,9 +49,9 @@ class Object:
         self.dec = params['dec']
         self.color = self._return_filterid_color()
         self.lightcurve = self._load_lightcurve()
-        self.sibling = None
+        self.siblings = []
         self.rcid_map = None
-        # Tolerance for finding object siblings, in units of arcseconds
+        # Tolerance for finding object siblingss, in units of arcseconds
         self.sibling_tol_as = 2.0
 
     def __repr__(self):
@@ -61,6 +61,7 @@ class Object:
         title += 'Filter ID: %i | Color: %s\n' % (self.filterid, self.color)
         title += 'Ra/Dec: (%.5f, %.5f)\n' % (self.ra, self.dec)
         title += '%i Epochs passing quality cuts\n' % self.lightcurve.nepochs
+        title += '%i siblings identified\n' % len(self.siblings)
 
         return title
 
@@ -88,35 +89,38 @@ class Object:
         # Defined by ZTF convention
         if self.filterid == 1:
             return 'g'
-        if self.filterid == 2:
+        elif self.filterid == 2:
             return 'r'
+        elif self.filterid == 3:
+            return 'i'
 
     def load_rcid_map(self):
         rcid_map_filename = self.rcid_map_filename
         rcid_map = pickle.load(open(rcid_map_filename, 'rb'))
         return rcid_map
 
-    def return_sibling_filename(self):
-        sibling_filename = self.filename.replace('.txt', '.siblings')
-        return sibling_filename
+    def return_siblings_filename(self):
+        siblings_filename = self.filename.replace('.txt', '.siblings')
+        return siblings_filename
 
     def _load_lightcurve(self):
         return Lightcurve(self.filename, self.lightcurve_position)
 
-    def set_sibling(self, sibling_lightcurve_position, printFlag=False):
-        # Assign the sibling to its own object instance
-        self.sibling = Object(self.filename, sibling_lightcurve_position)
+    def set_siblings(self, siblings_lightcurve_position, printFlag=False):
+        # Assign the siblings to its own object instance
+        self.siblings.append(Object(self.filename,
+                                    siblings_lightcurve_position))
 
         if printFlag:
             print('---- Sibling found at %.5f, %.5f !' % (
-                self.sibling.ra, self.sibling.dec))
+                self.siblings.ra, self.siblings.dec))
         if printFlag:
             print('---- Original Color: %i | Sibling Color: %i' % (
-                self.filterid, self.sibling.filterid))
+                self.filterid, self.siblings.filterid))
 
     def test_radec(self, ra, dec):
         # See if the data is close enough to the object to be the
-        # object's sibling
+        # object's siblings
 
         # Tolerance is set in self.sibling_tol_as, in units of arcseconds
         tol_degree = self.sibling_tol_as / 3600.
@@ -126,84 +130,81 @@ class Object:
 
         delta_dec = np.abs(dec - self.dec)
         if delta_dec > tol_degree:
-            return 0
+            return False
 
         # Calculate the full spherical distance between the data and
         # the object
         delta_ra = (ra - self.ra) * np.cos(np.radians(self.dec))
         delta = np.sqrt(delta_dec ** 2. + delta_ra ** 2.)
 
-        # Determine if the sibling is within the set tolerance
+        # Determine if the siblings is within the set tolerance
         if delta <= tol_degree:
-            return 1
+            return True
         else:
-            return 0
+            return False
 
-    def locate_sibling(self, printFlag=False):
+    def locate_siblings(self, printFlag=False):
         #
         if printFlag:
-            print('Locating sibling for ZTF Object %i' % self.objectid)
+            print('Locating siblings for ZTF Object %i' % self.objectid)
             print('-- Object location: %.5f, %.5f ...' % (self.ra, self.dec))
 
         if self.rcid_map is None:
             self.rcid_map = self.load_rcid_map()
 
-        # Searching for sibling in the opposite filtered section of
-        # the rcid_map
-        filterid = None
-        if self.filterid == 1:
-            filterid = 2
-        elif self.filterid == 2:
-            filterid = 1
+        # Searching for siblings in the opposite
+        # filtered sections of the rcid_map
+        sibling_filterids = [i for i in [1, 2, 3] if i != self.filterid]
         rcid = self.rcid
 
-        try:
-            buffer_start, buffer_end = self.rcid_map[filterid][rcid]
-        except KeyError:
-            print('** rcid_map missing filterid %i rcid %i ! **' % (filterid,
-                                                                    rcid))
-            return 1
+        for filterid in sibling_filterids:
+            try:
+                buffer_start, buffer_end = self.rcid_map[filterid][rcid]
+            except KeyError:
+                print('** rcid_map missing filterid %i rcid %i ! **' % (filterid,
+                                                                        rcid))
+                return 1
 
-        if printFlag:
-            print('-- Searching between buffers %i and %i' % (buffer_start,
-                                                              buffer_end))
-
-        objects_fileobj = open(self.objects_filename, 'r')
-        objects_fileobj.seek(buffer_start)
-
-        sibling_lightcurve_position = None
-
-        while True:
-            line = objects_fileobj.readline()
-            object_position = objects_fileobj.tell()
-
-            # Check for end of file
-            if not line:
-                break
-
-            # Check for end of rcid section of the file
-            if object_position > buffer_end:
-                break
-
-            data = line.replace('\n', '').split(',')
-            ra, dec = float(data[5]), float(data[6])
-            status = self.test_radec(ra, dec)
-
-            if status == 0:
-                # No sibling found on this line
-                continue
-            elif status == 1:
-                # Sibling found!
-                sibling_lightcurve_position = data[-1]
-                break
-
-        objects_fileobj.close()
-
-        if sibling_lightcurve_position is None:
             if printFlag:
-                print('---- No sibling found')
-        else:
-            self.set_sibling(sibling_lightcurve_position)
+                print('-- Searching between buffers %i and %i' % (buffer_start,
+                                                                  buffer_end))
+
+            objects_fileobj = open(self.objects_filename, 'r')
+            objects_fileobj.seek(buffer_start)
+
+            siblings_lightcurve_position = None
+
+            while True:
+                line = objects_fileobj.readline()
+                object_position = objects_fileobj.tell()
+
+                # Check for end of file
+                if not line:
+                    break
+
+                # Check for end of rcid section of the file
+                if object_position > buffer_end:
+                    break
+
+                data = line.replace('\n', '').split(',')
+                ra, dec = float(data[5]), float(data[6])
+                status = self.test_radec(ra, dec)
+
+                if status == 0:
+                    # No siblings found on this line
+                    continue
+                elif status == 1:
+                    # Sibling found!
+                    siblings_lightcurve_position = data[-1]
+                    break
+
+            objects_fileobj.close()
+
+            if siblings_lightcurve_position is None:
+                if printFlag:
+                    print('---- No siblings found for filter %i' % filterid)
+            else:
+                self.set_siblings(siblings_lightcurve_position)
 
     def plot_lightcurve(self, insert_radius=30):
         hmjd_min = np.min(self.lightcurve.hmjd) - 10
@@ -249,7 +250,20 @@ class Object:
         hmjd_min = np.min(self.lightcurve.hmjd) - 10
         hmjd_max = np.max(self.lightcurve.hmjd) + 10
 
-        fig, ax = plt.subplots(2, 2, figsize=(12, 6))
+        if self.siblings is None:
+            self.locate_siblings()
+
+        if len(self.siblings) == 0:
+            self.plot_lightcurve(insert_radius=insert_radius)
+            return
+        elif len(self.siblings) == 1:
+            N_rows = 2
+            figsize_height = 6
+        else:
+            N_rows = 3
+            figsize_height = 9
+
+        fig, ax = plt.subplots(N_rows, 2, figsize=(12, figsize_height))
         fig.subplots_adjust(top=0.92)
         fig.subplots_adjust(hspace=0.4)
 
@@ -279,54 +293,40 @@ class Object:
         ax[0][1].set_xlabel('Observation Date')
         ax[0][1].set_title('%i Days Around Peak' % insert_radius)
 
-        if self.sibling is None:
-            self.locate_sibling()
+        for i, sibling in enumerate(self.siblings):
+            sibling._load_params()
+            sibling._load_lightcurve()
 
-        if self.sibling is not None:
-            self.sibling._load_params()
-            self.sibling._load_lightcurve()
-
-            ax[1][0].errorbar(self.sibling.lightcurve.hmjd,
-                              self.sibling.lightcurve.mag,
-                              yerr=self.sibling.lightcurve.magerr,
+            ax[i][0].errorbar(self.siblings.lightcurve.hmjd,
+                              self.siblings.lightcurve.mag,
+                              yerr=self.siblings.lightcurve.magerr,
                               ls='none',
                               marker='.',
-                              color=self.sibling.color)
-            ax[1][0].invert_yaxis()
-            ax[1][0].set_xlim(hmjd_min, hmjd_max)
-            ax[1][0].set_ylabel('Magnitude')
-            ax[1][0].set_xlabel('Observation Date')
-            ax[1][0].set_title('ZTF Object %i '
-                               '(%s band)' % (self.sibling.objectid,
-                                              self.sibling.color))
+                              color=self.siblings.color)
+            ax[i][0].invert_yaxis()
+            ax[i][0].set_xlim(hmjd_min, hmjd_max)
+            ax[i][0].set_ylabel('Magnitude')
+            ax[i][0].set_xlabel('Observation Date')
+            ax[i][0].set_title('ZTF Object %i '
+                               '(%s band)' % (self.siblings.objectid,
+                                              self.siblings.color))
 
-            hmjd_cond = (self.sibling.lightcurve.hmjd >= hmjd_min_insert) & \
-                        (self.sibling.lightcurve.hmjd <= hmjd_max_insert)
+            hmjd_cond = (self.siblings.lightcurve.hmjd >= hmjd_min_insert) & \
+                        (self.siblings.lightcurve.hmjd <= hmjd_max_insert)
 
-            ax[1][1].errorbar(self.sibling.lightcurve.hmjd[hmjd_cond],
-                              self.sibling.lightcurve.mag[hmjd_cond],
-                              yerr=self.sibling.lightcurve.magerr[hmjd_cond],
+            ax[i][1].errorbar(self.siblings.lightcurve.hmjd[hmjd_cond],
+                              self.siblings.lightcurve.mag[hmjd_cond],
+                              yerr=self.siblings.lightcurve.magerr[hmjd_cond],
                               ls='none',
                               marker='.',
-                              color=self.sibling.color)
-            ax[1][1].invert_yaxis()
-            ax[1][1].set_xlim(hmjd_min_insert, hmjd_max_insert)
-            ax[1][1].set_ylabel('Magnitude')
-            ax[1][1].set_xlabel('Observation Date')
-            ax[1][1].set_title('%i Days Around Peak' % insert_radius)
+                              color=self.siblings.color)
+            ax[i][1].invert_yaxis()
+            ax[i][1].set_xlim(hmjd_min_insert, hmjd_max_insert)
+            ax[i][1].set_ylabel('Magnitude')
+            ax[i][1].set_xlabel('Observation Date')
+            ax[i][1].set_title('%i Days Around Peak' % insert_radius)
 
-        else:
-            for i in range(2):
-                ax[1][i].axis('off')
-
-                if self.rcid_map is None:
-                    error_message = 'rcid_map missing'
-                else:
-                    error_message = 'sibling could not be found'
-
-                ax[1][i].text(0.5, 0.5, error_message)
-
-        fname = '%s-%i-lc-with_sibling.png' % (
+        fname = '%s-%i-lc-with_siblings.png' % (
             self.filename, self.lightcurve_position)
         fig.savefig(fname)
         print('---- Lightcurves saved: %s' % fname)

@@ -3,7 +3,6 @@
 zort-initialize :
 Create an objects file and rcip map for all lightcurve files in a directory.
 These initialization files speed up quick reading for zort.
-
 """
 
 import argparse
@@ -19,15 +18,15 @@ def main():
     # Get arguments
     parser = argparse.ArgumentParser(description=__doc__)
     arguments = parser.add_argument_group('arguments')
-    arguments.add_argument('-lightcurve-file-directory', type=str,
+    arguments.add_argument('--lightcurve-file-directory', type=str,
                            help='Directory containing lightcurve files.',
                            required=True)
 
     parallelgroup = parser.add_mutually_exclusive_group()
-    parallelgroup.add_argument('-single', dest='parallelFlag',
+    parallelgroup.add_argument('--single', dest='parallelFlag',
                                action='store_false',
                                help='Run in single mode. DEFAULT.')
-    parallelgroup.add_argument('-parallel', dest='parallelFlag',
+    parallelgroup.add_argument('--parallel', dest='parallelFlag',
                                action='store_true',
                                help='Run in parallel mode. Requires mpi4py.')
     parser.set_defaults(parallelFlag=False)
@@ -38,7 +37,7 @@ def main():
         reqs = subprocess.check_output([sys.executable, '-m', 'pip', 'freeze'])
         installed_packages = [r.decode().split('==')[0] for r in reqs.split()]
         if 'mpi4py' not in installed_packages:
-            print('mpi4py must be installed to use -parallel mode.')
+            print('mpi4py must be installed to use --parallel mode.')
             sys.exit(0)
 
     lightcurve_files = gather_lightcurve_files(args.lightcurve_file_directory)
@@ -57,7 +56,6 @@ def main():
 
     my_lightcurve_files = np.array_split(lightcurve_files, size)[rank]
     for lightcurve_file in my_lightcurve_files:
-        print(lightcurve_file)
         generate_objects_file(lightcurve_file)
         generate_rcid_map(lightcurve_file)
 

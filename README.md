@@ -29,7 +29,7 @@ the ZTF Public Data Release. The features of ```zort``` include:
 - Seamless looping through ZTF lightcurves for custom filtering, where 
 interesting objects can be saved and recovered by only their file location
 - Consolidating g-band and R-band lightcurves of a single source that are 
-otherwise labelled as two separate objects by pairing objects as "siblings"
+otherwise labelled as two separate objects by pairing objects as "siblingss"
 - Plotting lightcurves in multiple colors for visual inspection
 
 ### Installation
@@ -57,7 +57,7 @@ ascension and declination) and colors (g-band and R-band).
 include dates, magnitudes and magnitude errors.
 - **rcid map**: Information on the organization of the lightcurve files 
 required for faster object access.
-- **sibling**: A spatially coincident object in a different color 
+- **siblings**: A spatially coincident object in a different color 
 originating from the same astrophysical source.
 
 ### Initialization
@@ -81,7 +81,7 @@ zort-initialize -lightcurve-file-directory=LIGHTCURVE_FILE_DIRECTORY -parallel
 ```
 
 If each lightcurve file does not have an object file and an RCID map then 
-```zort``` will not be able to locate siblings 
+```zort``` will not be able to locate siblingss 
 
 ## Examples
 
@@ -173,49 +173,49 @@ multiple colors of the same source.
 source. The ZTF Public Data Release contains observations in g-band 
 (filterid=1) and R-band (filterid=2). Each object can therefore have one 
 additional object that comes from the same astrophysical source but is in a 
-different color. These matching objects are labelled as "siblings" and can 
+different color. These matching objects are labelled as "siblingss" and can 
 be both discovered and saved with ```zort```.
 
-The sibling for each object can be located by simply running an object's  
-```locate_sibling``` method. Running
+The siblings for each object can be located by simply running an object's  
+```locate_siblings``` method. Running
 
 ```
 filename = 'field000245_ra357.03053to5.26702_dec-27.96964to-20.4773.txt'
 buffer_position = 6852
 obj = Object(filename, buffer_position)
-obj.locate_sibling()
+obj.locate_siblings()
 ```
 
 results in
 ```
-Locating sibling for ZTF Object 245101100000025
+Locating siblings for ZTF Object 245101100000025
 -- Object location: 4.74852, -26.23583 ...
-** sibling file missing! **
+** siblings file missing! **
 -- Searching between buffers 17749819 and 18135260
 ---- Sibling found at 4.74851, -26.23581 !
 ---- Original Color: 1 | Sibling Color: 2
 ---- Sibling saved
 ```  
 
-The sibling is saved in a ```*.siblings``` file that can be later recalled. This 
-was the first time that a sibling was located for this lightcurve file and 
-therefore a new sibling file was generated. Now that the sibling has been 
+The siblings is saved in a ```*.siblingss``` file that can be later recalled. This 
+was the first time that a siblings was located for this lightcurve file and 
+therefore a new siblings file was generated. Now that the siblings has been 
 located, running
 
 ```
-obj.locate_sibling()
+obj.locate_siblings()
 ```
 
 results in
 ```
-Locating sibling for ZTF Object 245101100000025
+Locating siblings for ZTF Object 245101100000025
 -- Object location: 4.74852, -26.23583 ...
--- Loading sibling...
+-- Loading siblings...
 -- Sibling loaded!
 ```  
 
-An object's sibling is itself another object and can be accessed through the 
-sibling attribute.
+An object's siblings is itself another object and can be accessed through the 
+siblings attribute.
 
 ```
 print(obj)
@@ -226,7 +226,7 @@ Color: g
 Ra/Dec: (4.74852, -26.23583)
 22 Epochs passing quality cuts
 
-print(obj.sibling)
+print(obj.siblings)
 Filename: field000245_ra357.03053to5.26702_dec-27.96964to-20.4773.txt
 Buffer Position: 126136890
 Object ID: 245201100000047
@@ -235,9 +235,9 @@ Ra/Dec: (4.74851, -26.23581)
 22 Epochs passing quality cuts
 ```
 
-The default tolerance for matching two objecs as siblings is is 2.0". However 
+The default tolerance for matching two objecs as siblingss is is 2.0". However 
 this can be altered by changing ```obj.sibling_tol_as``` prior to runnning
-```obj.locate_sibling()``` for the first time.  
+```obj.locate_siblings()``` for the first time.  
 
 ### Plotting lightcurves
 
@@ -245,9 +245,9 @@ A lightcurve plot can be generated for any object using the
 ```obj.plot_lightcurve()``` method.
 ![](https://raw.githubusercontent.com/MichaelMedford/zort/master/example_images/field000245_ra357.03053to5.26702_dec-27.96964to-20.4773.txt-6852-lc.png)
 
-A lightcurve plot including an object's sibling 
+A lightcurve plot including an object's siblings 
 cand be generated using the ```obj.plot_lightcurves()``` method.
-![](https://raw.githubusercontent.com/MichaelMedford/zort/master/example_images/field000245_ra357.03053to5.26702_dec-27.96964to-20.4773.txt-6852-lc-with_sibling.png)
+![](https://raw.githubusercontent.com/MichaelMedford/zort/master/example_images/field000245_ra357.03053to5.26702_dec-27.96964to-20.4773.txt-6852-lc-with_siblings.png)
 
 ## Requirements
 * Python 3.6
