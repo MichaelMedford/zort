@@ -203,7 +203,7 @@ class Object:
             else:
                 self.set_siblings(siblings_lightcurve_position, printFlag)
 
-    def plot_lightcurve(self, insert_radius=30):
+    def plot_lightcurve(self, filename=None, insert_radius=30):
         hmjd_min = np.min(self.lightcurve.hmjd) - 10
         hmjd_max = np.max(self.lightcurve.hmjd) + 10
 
@@ -241,14 +241,15 @@ class Object:
         ax[1].set_xlabel('Observation Date')
         ax[1].set_title('%i Days Around Peak' % insert_radius)
 
-        fname = '%s-%i-lc.png' % (self.filename, self.lightcurve_position)
-        fig.savefig(fname, dpi=300, bbox_inches='tight', pad_inches=0.05)
-        print('---- Lightcurve saved: %s' % fname)
+        if filename is None:
+            filename = '%s-%i-lc.png' % (self.filename, self.lightcurve_position)
+        fig.savefig(filename, dpi=300, bbox_inches='tight', pad_inches=0.05)
+        print('---- Lightcurve saved: %s' % filename)
 
         plt.close(fig)
         return fname
 
-    def plot_lightcurves(self, insert_radius=30):
+    def plot_lightcurves(self, filename=None, insert_radius=30):
         hmjd_min = np.min(self.lightcurve.hmjd) - 10
         hmjd_max = np.max(self.lightcurve.hmjd) + 10
 
@@ -337,10 +338,11 @@ class Object:
             ax[i][1].set_xlabel('Observation Date')
             ax[i][1].set_title('%i Days Around Peak' % insert_radius)
 
-        fname = '%s-%i-lc-with_siblings.png' % (
-            self.filename, self.lightcurve_position)
-        fig.savefig(fname, dpi=300, bbox_inches='tight', pad_inches=0.05)
-        print('---- Lightcurves saved: %s' % fname)
+        if filename is None:
+            filename = '%s-%i-lc-with_siblings.png' % (
+                self.filename, self.lightcurve_position)
+        fig.savefig(filename, dpi=300, bbox_inches='tight', pad_inches=0.05)
+        print('---- Lightcurves saved: %s' % filename)
 
         plt.close(fig)
         return fname
