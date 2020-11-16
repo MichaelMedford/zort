@@ -5,6 +5,12 @@ utils.py
 
 import os
 
+filterid_dict = {
+    1: 'g',
+    2: 'r',
+    3: 'i'
+}
+
 
 def return_filename(filename):
     try:

@@ -12,9 +12,8 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from zort.lightcurve import Lightcurve
-from zort.utils import return_filename
-from zort.utils import return_objects_filename
-from zort.utils import return_rcid_map_filename
+from zort.utils import return_filename, return_objects_filename, \
+    return_rcid_map_filename, filterid_dict
 
 
 ################################
@@ -87,12 +86,7 @@ class Object:
 
     def _return_filterid_color(self):
         # Defined by ZTF convention
-        if self.filterid == 1:
-            return 'g'
-        elif self.filterid == 2:
-            return 'r'
-        elif self.filterid == 3:
-            return 'i'
+        return filterid_dict[self.fieldid]
 
     def load_rcid_map(self):
         rcid_map_filename = self.rcid_map_filename
@@ -158,16 +152,21 @@ class Object:
         rcid = self.rcid
 
         for filterid in sibling_filterids:
-            try:
-                buffer_start, buffer_end = self.rcid_map[filterid][rcid]
-            except KeyError:
-                print('** rcid_map missing filterid %i rcid %i ! **' % (filterid,
-                                                                        rcid))
-                return 1
+            if filterid not in self.rcid_map:
+                print('-- rcid_map does not contain filter '
+                      '%s' % filterid_dict[fieldid])
+                continue
+            elif rcid not in self.rcid_map[filterid]:
+                print('-- rcid_map[%s] does not contain rcid '
+                      '%i' % (filterid_dict[fieldid], rcid))
+                continue
+
+            buffer_start, buffer_end = self.rcid_map[filterid][rcid]
 
             if printFlag:
-                print('-- Searching between buffers %i and %i' % (buffer_start,
-                                                                  buffer_end))
+                print('-- Searching filter %s between '
+                      'buffers %i and %i' % (filterid_dict[fieldid],
+                                             buffer_start, buffer_end))
 
             objects_fileobj = open(self.objects_filename, 'r')
             objects_fileobj.seek(buffer_start)
