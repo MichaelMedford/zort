@@ -158,10 +158,12 @@ class Object:
         for filterid in sibling_filterids:
             color = filterid_dict[filterid]
             if filterid not in self.rcid_map:
-                print('-- rcid_map does not contain filter %s' % color)
+                if printFlag:
+                    print('-- rcid_map does not contain filter %s' % color)
                 continue
             elif rcid not in self.rcid_map[filterid]:
-                print('-- rcid_map %s does not have rcid %i' % (color, rcid))
+                if printFlag:
+                    print('-- rcid_map %s does not have rcid %i' % (color, rcid))
                 continue
 
             buffer_start, buffer_end = self.rcid_map[filterid][rcid]
