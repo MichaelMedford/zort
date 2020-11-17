@@ -60,7 +60,10 @@ class Object:
         title += 'Object ID: %i\n' % self.objectid
         title += 'Filter ID: %i | Color: %s\n' % (self.filterid, self.color)
         title += 'Ra/Dec: (%.5f, %.5f)\n' % (self.ra, self.dec)
-        title += '%i Epochs passing quality cuts\n' % self.lightcurve.nepochs
+        if self.apply_catmask:
+            title += '%i Epochs passing catflag cuts\n' % self.lightcurve.nepochs
+        else:
+            title += '%i Epochs without applying catflag cuts\n' % self.lightcurve.nepochs
         title += '%i siblings identified\n' % len(self.siblings)
 
         return title
