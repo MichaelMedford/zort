@@ -141,7 +141,7 @@ class Object:
         else:
             return False
 
-    def locate_siblings(self, printFlag=False):
+    def locate_siblings(self, skip_filterids=None, printFlag=False):
         #
         if printFlag:
             print('Locating siblings for ZTF Object %i' % self.objectid)
@@ -153,6 +153,9 @@ class Object:
         # Searching for siblings in the opposite
         # filtered sections of the rcid_map
         sibling_filterids = [i for i in [1, 2, 3] if i != self.filterid]
+        if skip_filterids:
+            sibling_filterids = [i for i in sibling_filterids
+                                 if i not in skip_filterids]
         rcid = self.rcid
 
         for filterid in sibling_filterids:
