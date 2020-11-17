@@ -76,7 +76,7 @@ class LightcurveFile:
     """
 
     def __init__(self, filename, init_object_position=60,
-                 proc_rank=0, proc_size=1):
+                 proc_rank=0, proc_size=1, apply_mask=True):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
         self.objects_filename = return_objects_filename(filename)
@@ -88,6 +88,7 @@ class LightcurveFile:
         self.proc_rank = proc_rank
         self.proc_size = proc_size
         self.objects_file_counter = 0
+        self.apply_mask = apply_mask
 
     def __iter__(self):
         return self
@@ -127,7 +128,8 @@ class LightcurveFile:
 
     def return_object(self, line):
         lightcurve_position = self._return_parsed_line(line)[-1]
-        return Object(self.filename, lightcurve_position)
+        return Object(self.filename, lightcurve_position,
+                      apply_mask=self.apply_mask)
 
     def return_objects_file(self):
         file = open(self.objects_filename, 'r')
