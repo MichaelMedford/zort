@@ -57,7 +57,7 @@ class Lightcurve:
         """
         Loads the lightcurve from a lightcurve file, starting at the location
         of the object. The default is to apply a mask to any observations with
-        a 'catflags' != 0, following the recommendation of the ZTF Public Data
+        a catflags >= 32768, following the recommendation of the ZTF Public Data
         Release website.
         """
 
@@ -83,8 +83,8 @@ class Lightcurve:
 
         # Apply the quality cut mask
         if self.apply_catmask:
-            cond = data['catflags'] == 0
-            data = data[cond]
+            mask = data['catflags'] >= 32768
+            data = data[~mask]
 
         # Sort the observations by date
         cond = np.argsort(data['hmjd'])
