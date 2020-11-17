@@ -25,13 +25,14 @@ class Lightcurve:
     of an Object class.
     """
 
-    def __init__(self, filename, lightcurve_position, apply_mask=True):
+    def __init__(self, filename, lightcurve_position, apply_catmask=True):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
 
         self.lightcurve_position = lightcurve_position
         self.object_id = None  # set in self._load_lightcurve
-        data = self._load_lightcurve(apply_mask=apply_mask)
+        self.apply_catmask = apply_catmask
+        data = self._load_lightcurve()
         self.hmjd = data['hmjd']
         self.mag = data['mag']
         self.magerr = data['magerr']
@@ -39,7 +40,7 @@ class Lightcurve:
         self.flux = flux
         self.fluxerr = fluxerr
         self.clrcoeff = data['clrcoeff']
-        self.carflag = data['carflag']
+        self.catflags = data['catflags']
         self.nepochs = float(len(self.mag))
         self.mag_med = self._return_median(self.mag)
         self.mag_std = self._return_std(self.mag)
@@ -52,11 +53,11 @@ class Lightcurve:
 
         return title
 
-    def _load_lightcurve(self, apply_mask=True):
+    def _load_lightcurve(self):
         """
         Loads the lightcurve from a lightcurve file, starting at the location
         of the object. The default is to apply a mask to any observations with
-        a 'carflag' != 0, following the recommendation of the ZTF Public Data
+        a 'catflags' != 0, following the recommendation of the ZTF Public Data
         Release website.
         """
 
@@ -77,12 +78,12 @@ class Lightcurve:
 
         # Assemble the data into a numpy recarray
         dtype = [('hmjd', float), ('mag', float), ('magerr', float),
-                 ('clrcoeff', float), ('carflag', int)]
+                 ('clrcoeff', float), ('catflags', int)]
         data = np.array(data, dtype=dtype)
 
         # Apply the quality cut mask
-        if apply_mask:
-            cond = data['carflag'] == 0
+        if self.apply_catmask:
+            cond = data['catflags'] == 0
             data = data[cond]
 
         # Sort the observations by date

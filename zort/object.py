@@ -31,7 +31,7 @@ class Object:
     coincident objects with the locate_siblingss function.
     """
 
-    def __init__(self, filename, lightcurve_position):
+    def __init__(self, filename, lightcurve_position, apply_catmask=False):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
         self.objects_filename = return_objects_filename(filename)
@@ -47,6 +47,7 @@ class Object:
         self.ra = params['ra']
         self.dec = params['dec']
         self.color = self._return_filterid_color()
+        self.apply_catmask = apply_catmask
         self.lightcurve = self._load_lightcurve()
         self.siblings = []
         self.rcid_map = None
@@ -98,7 +99,8 @@ class Object:
         return siblings_filename
 
     def _load_lightcurve(self):
-        return Lightcurve(self.filename, self.lightcurve_position)
+        return Lightcurve(self.filename, self.lightcurve_position,
+                          apply_catmask=self.apply_catmask)
 
     def set_siblings(self, siblings_lightcurve_position, printFlag=False):
         # Assign the siblings to its own object instance
