@@ -9,6 +9,8 @@ import glob
 import os
 import pickle
 from collections import defaultdict
+import numpy as np
+from scipy.spatial import cKDTree
 
 
 def gather_lightcurve_files(dataDir):
@@ -77,36 +79,41 @@ def generate_rcid_map(lightcurve_file):
 
     rcid, rcid_current = None, None
     filterid, filterid_current = None, None
-    object_location_start = None
+    ra_arr, dec_arr, lightcurve_position_arr = [], [], []
     rcid_map = defaultdict(dict)
 
-    while True:
-        line = f_in.readline()
-        object_location_current = f_in.tell() - len(line)
+    for line in f_in:
+        data = line.replace('\n', '').split(',')
 
-        # Check for end of the file
-        if not line:
-            rcid_map[filterid_current][rcid_current] = (
-                object_location_start, object_location_current)
-            break
-
-        line_split = line.split(',')
-        rcid = int(line_split[4])
-        filterid = int(line_split[2])
+        rcid = int(data[4])
+        filterid = int(data[2])
 
         # Initialize the rcid
         if rcid_current is None:
-            object_location_start = object_location_current
             rcid_current = rcid
             filterid_current = filterid
 
         # Check to see if the block has switched
         if rcid != rcid_current:
-            rcid_map[filterid_current][rcid_current] = (
-                object_location_start, object_location_current)
-            object_location_start = object_location_current
+            objects = np.array([ra_arr, dec_arr]).T
+            kdtree = cKDTree(objects)
+            rcid_map[filterid_current][rcid_current] = \
+                (kdtree, lightcurve_position_arr)
+
             rcid_current = rcid
             filterid_current = filterid
+            ra_arr, dec_arr, lightcurve_position_arr = [], [], []
+
+        ra, dec = float(data[5]), float(data[6])
+        lightcurve_position = int(data[-1])
+        ra_arr.append(ra)
+        dec_arr.append(dec)
+        lightcurve_position_arr.append(lightcurve_position)
+
+    objects = np.array([ra_arr, dec_arr]).T
+    kdtree = cKDTree(objects)
+    rcid_map[filterid_current][rcid_current] = \
+        (kdtree, lightcurve_position_arr)
 
     f_in.close()
 

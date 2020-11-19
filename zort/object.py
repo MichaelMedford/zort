@@ -141,7 +141,7 @@ class Object:
         else:
             return False
 
-    def locate_siblings(self, skip_filterids=None, printFlag=False):
+    def locate_siblings(self, radius=2/3600., skip_filterids=None, printFlag=False):
         #
         if printFlag:
             print('Locating siblings for ZTF Object %i' % self.objectid)
@@ -169,43 +169,11 @@ class Object:
                     print('-- rcid_map %s does not have rcid %i' % (color, rcid))
                 continue
 
-            buffer_start, buffer_end = self.rcid_map[filterid][rcid]
-
-            if printFlag:
-                print('-- Searching filter %s between '
-                      'buffers %i and %i' % (filterid_dict[filterid],
-                                             buffer_start, buffer_end))
-
-            objects_fileobj = open(self.objects_filename, 'r')
-            objects_fileobj.seek(buffer_start)
-
-            siblings_lightcurve_position = None
-
-            while True:
-                line = objects_fileobj.readline()
-                object_position = objects_fileobj.tell()
-
-                # Check for end of file
-                if not line:
-                    break
-
-                # Check for end of rcid section of the file
-                if object_position > buffer_end:
-                    break
-
-                data = line.replace('\n', '').split(',')
-                ra, dec = float(data[5]), float(data[6])
-                status = self.test_radec(ra, dec)
-
-                if status == 0:
-                    # No siblings found on this line
-                    continue
-                elif status == 1:
-                    # Sibling found!
-                    siblings_lightcurve_position = data[-1]
-                    break
-
-            objects_fileobj.close()
+            kdtree, lightcurve_position_arr = self.rcid_map[filterid][rcid]
+            idx = kdtree.query_ball_point((self.ra, self.dec), radius)
+            if len(idx) == 0:
+                continue
+            siblings_lightcurve_position = int(lightcurve_position_arr[idx[0]])
 
             if siblings_lightcurve_position is None:
                 if printFlag:
