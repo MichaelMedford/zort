@@ -28,7 +28,7 @@ class Object:
     along with its parameters and lightcurve. Note that each ZTF object is only
     one color, with a different color from the same astrophysical source
     labelled as a different object. This class can find and save spatially
-    coincident objects with the locate_siblingss function.
+    coincident objects with the locate_siblings function.
     """
 
     def __init__(self, filename, lightcurve_position,
