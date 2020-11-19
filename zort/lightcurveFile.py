@@ -11,6 +11,7 @@ from zort.object import Object
 from zort.utils import return_filename
 from zort.utils import return_objects_filename
 from zort.utils import return_rcid_map_filename
+from zort.radec import return_rcid
 
 
 ################################
@@ -129,7 +130,8 @@ class LightcurveFile:
     def return_object(self, line):
         lightcurve_position = self._return_parsed_line(line)[-1]
         return Object(self.filename, lightcurve_position,
-                      apply_catmask=self.apply_catmask)
+                      apply_catmask=self.apply_catmask,
+                      rcid_map=self.rcid_map)
 
     def return_objects_file(self):
         file = open(self.objects_filename, 'r')
@@ -140,20 +142,22 @@ class LightcurveFile:
         rcid_map = pickle.load(open(self.rcid_map_filename, 'rb'))
         return rcid_map
 
-    def locate_objects_by_radec(self, ra, dec, rcid, radius=3.):
+    def locate_objects_by_radec(self, ra, dec, rcid=None, radius_as=2):
+        if rcid is None:
+            fieldid = int(self.filename.split('_')[0].replace('field', ''))
+            rcid = return_rcid(fieldid, ra, dec)
+            if rcid is None:
+                return
+
+        radius_deg = radius_as / 3600.
         objects = []
-        for fid in [1, 2]:
-            location_start, location_end = self.rcid_map[fid][rcid]
-            self.objects_file.seek(location_start)
-            object_location = self.objects_file.tell()
-            while object_location < location_end:
-                line = self.objects_file.readline()
-                if line == '':
-                    break
-                else:
-                    object = self.return_object(line)
-                    object.sibling_tol_as = radius
-                    if object.test_radec(ra, dec):
-                        objects.append(object)
-                object_location = self.objects_file.tell()
+        for filterid in self.rcid_map:
+            kdtree, lightcurve_position_arr = self.rcid_map[filterid][rcid]
+            idx_arr = kdtree.query_ball_point((ra, dec), radius_deg)
+            if len(idx_arr) == 0:
+                continue
+            for idx in idx_arr:
+                lightcurve_position = int(lightcurve_position_arr[idx])
+                obj = Object(self.filename, lightcurve_position)
+                objects.append(obj)
         return objects

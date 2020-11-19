@@ -29,7 +29,7 @@ the ZTF Public Data Release. The features of ```zort``` include:
 - Seamless looping through ZTF lightcurves for custom filtering, where 
 interesting objects can be saved and recovered by only their file location
 - Consolidating g-band and R-band lightcurves of a single source that are 
-otherwise labelled as two separate objects by pairing objects as "siblingss"
+otherwise labelled as two separate objects by pairing objects as "siblings"
 - Plotting lightcurves in multiple colors for visual inspection
 
 ### Installation
@@ -55,7 +55,7 @@ observations in a single color. Objects include IDs, sky locations (in right
 ascension and declination) and colors (g-band and R-band).
 - **lightcurve**: Observation epochs of an object. Lightcurve observations 
 include dates, magnitudes and magnitude errors.
-- **rcid map**: Information on the organization of the lightcurve files 
+- **rcid map**: Binary search trees for the objects in a lightcurve file. 
 required for faster object access.
 - **siblings**: A spatially coincident object in a different color 
 originating from the same astrophysical source.
@@ -66,7 +66,7 @@ originating from the same astrophysical source.
 (```*.txt```) in order to make object discovery and multiple color 
 consolidation faster. Object files (```*.objects```) contain all of the 
 metadata for each object in a lightcurve file. RCID map files 
-(```*.rcid_map```) contain lightcurve file metadata that facilitates faster 
+(```*.rcid_map```) contain binary search trees that facilitates faster 
 matching of multiple colors for individual objects. ```zort``` requires that 
 each lightcurve file has a corresponding object file and RCID map file.
 
@@ -81,7 +81,7 @@ zort-initialize -lightcurve-file-directory=LIGHTCURVE_FILE_DIRECTORY -parallel
 ```
 
 If each lightcurve file does not have an object file and an RCID map then 
-```zort``` will not be able to locate siblingss 
+```zort``` will not be able to locate siblings
 
 ## Examples
 
@@ -173,7 +173,7 @@ multiple colors of the same source.
 source. The ZTF Public Data Release contains observations in g-band 
 (filterid=1) and R-band (filterid=2). Each object can therefore have one 
 additional object that comes from the same astrophysical source but is in a 
-different color. These matching objects are labelled as "siblingss" and can 
+different color. These matching objects are labelled as "siblings" and can 
 be both discovered and saved with ```zort```.
 
 The siblings for each object can be located by simply running an object's  
@@ -183,7 +183,7 @@ The siblings for each object can be located by simply running an object's
 filename = 'field000245_ra357.03053to5.26702_dec-27.96964to-20.4773.txt'
 buffer_position = 6852
 obj = Object(filename, buffer_position)
-obj.locate_siblings()
+obj.locate_siblings(printFlag=True)
 ```
 
 results in
@@ -195,23 +195,6 @@ Locating siblings for ZTF Object 245101100000025
 ---- Sibling found at 4.74851, -26.23581 !
 ---- Original Color: 1 | Sibling Color: 2
 ---- Sibling saved
-```  
-
-The siblings is saved in a ```*.siblingss``` file that can be later recalled. This 
-was the first time that a siblings was located for this lightcurve file and 
-therefore a new siblings file was generated. Now that the siblings has been 
-located, running
-
-```
-obj.locate_siblings()
-```
-
-results in
-```
-Locating siblings for ZTF Object 245101100000025
--- Object location: 4.74852, -26.23583 ...
--- Loading siblings...
--- Sibling loaded!
 ```  
 
 An object's siblings is itself another object and can be accessed through the 
@@ -235,9 +218,9 @@ Ra/Dec: (4.74851, -26.23581)
 22 Epochs passing quality cuts
 ```
 
-The default tolerance for matching two objecs as siblingss is is 2.0". However 
-this can be altered by changing ```obj.sibling_tol_as``` prior to runnning
-```obj.locate_siblings()``` for the first time.  
+The default tolerance for matching two objects as siblings is 2.0". However 
+this can be altered by setting the ```radius``` argument 
+in ```obj.locate_siblings()```.  
 
 ### Plotting lightcurves
 
