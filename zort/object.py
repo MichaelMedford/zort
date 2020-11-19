@@ -31,7 +31,8 @@ class Object:
     coincident objects with the locate_siblingss function.
     """
 
-    def __init__(self, filename, lightcurve_position, apply_catmask=False):
+    def __init__(self, filename, lightcurve_position,
+                 apply_catmask=False, rcid_map=None):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
         self.objects_filename = return_objects_filename(filename)
@@ -50,9 +51,10 @@ class Object:
         self.apply_catmask = apply_catmask
         self.lightcurve = self._load_lightcurve()
         self.siblings = []
-        self.rcid_map = None
-        # Tolerance for finding object siblingss, in units of arcseconds
-        self.sibling_tol_as = 2.0
+        if rcid_map:
+            self.rcid_map = rcid_map
+        else:
+            self.rcid_map = None
 
     def __repr__(self):
         title = 'Filename: %s\n' % self.filename.split('/')[-1]
@@ -105,9 +107,9 @@ class Object:
         return Lightcurve(self.filename, self.lightcurve_position,
                           apply_catmask=self.apply_catmask)
 
-    def set_siblings(self, siblings_lightcurve_position, printFlag=False):
-        # Assign the siblings to its own object instance
-        sibling = Object(self.filename, siblings_lightcurve_position)
+    def set_sibling(self, sibling_lightcurve_position, printFlag=False):
+        # Assign the sibling to its own object instance
+        sibling = Object(self.filename, sibling_lightcurve_position)
         self.siblings.append(sibling)
 
         if printFlag:
@@ -116,33 +118,9 @@ class Object:
             print('---- Original Color: %s | Sibling Color: %s' % (
                 self.color, sibling.color))
 
-    def test_radec(self, ra, dec):
-        # See if the data is close enough to the object to be the
-        # object's siblings
-
-        # Tolerance is set in self.sibling_tol_as, in units of arcseconds
-        tol_degree = self.sibling_tol_as / 3600.
-
-        # Check to see if the data is within the correct declination range.
-        # This saves time by exiting before making more expensive calculations.
-
-        delta_dec = np.abs(dec - self.dec)
-        if delta_dec > tol_degree:
-            return False
-
-        # Calculate the full spherical distance between the data and
-        # the object
-        delta_ra = (ra - self.ra) * np.cos(np.radians(self.dec))
-        delta = np.sqrt(delta_dec ** 2. + delta_ra ** 2.)
-
-        # Determine if the siblings is within the set tolerance
-        if delta <= tol_degree:
-            return True
-        else:
-            return False
-
-    def locate_siblings(self, radius=2/3600., skip_filterids=None, printFlag=False):
-        #
+    def locate_siblings(self, radius_as=2,
+                        skip_filterids=None, printFlag=False):
+        radius_deg = radius_as / 3600.
         if printFlag:
             print('Locating siblings for ZTF Object %i' % self.objectid)
             print('-- Object location: %.5f, %.5f ...' % (self.ra, self.dec))
@@ -170,7 +148,7 @@ class Object:
                 continue
 
             kdtree, lightcurve_position_arr = self.rcid_map[filterid][rcid]
-            idx = kdtree.query_ball_point((self.ra, self.dec), radius)
+            idx = kdtree.query_ball_point((self.ra, self.dec), radius_deg)
             if len(idx) == 0:
                 continue
             siblings_lightcurve_position = int(lightcurve_position_arr[idx[0]])
@@ -179,7 +157,7 @@ class Object:
                 if printFlag:
                     print('---- No siblings found for filter %i' % filterid)
             else:
-                self.set_siblings(siblings_lightcurve_position, printFlag)
+                self.set_sibling(siblings_lightcurve_position, printFlag)
 
     def plot_lightcurve(self, filename=None, insert_radius=30):
         hmjd_min = np.min(self.lightcurve.hmjd) - 10

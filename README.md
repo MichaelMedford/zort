@@ -236,7 +236,7 @@ Ra/Dec: (4.74851, -26.23581)
 ```
 
 The default tolerance for matching two objecs as siblingss is is 2.0". However 
-this can be altered by changing ```obj.sibling_tol_as``` prior to runnning
+this can be altered by changing ```obj.sibling_rad_as``` prior to runnning
 ```obj.locate_siblings()``` for the first time.  
 
 ### Plotting lightcurves
