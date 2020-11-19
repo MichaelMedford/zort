@@ -5,7 +5,6 @@ Initialization of object and rcip_map files.
 """
 
 
-import glob
 import os
 import pickle
 from collections import defaultdict
@@ -13,20 +12,16 @@ import numpy as np
 from scipy.spatial import cKDTree
 
 
-def gather_lightcurve_files(dataDir):
-    fis = [f for f in glob.glob('%s/field*.txt' % dataDir) if
-           not os.path.exists(f.replace('.txt', '.rcid_map'))]
-    fis.sort()
-    return fis
-
-
 def generate_objects_file(lightcurve_file):
+    objects_file = lightcurve_file.replace('.txt', '.objects')
+    if os.path.exists(objects_file):
+        print('%s already exists. Skipping.' % objects_file)
+        return
+
     f_in = open(lightcurve_file, 'r')
 
     object_keys = ['id', 'nepochs', 'filterid',
                    'fieldid', 'rcid', 'ra', 'dec', 'lightcurve_position']
-
-    objects_file = lightcurve_file.replace('.txt', '.objects')
     with open(objects_file, 'w') as f_out:
         f_out.write('%s\n' % ','.join(object_keys))
 
@@ -72,6 +67,11 @@ def return_rcid_map_filesize(rcid_map):
 
 
 def generate_rcid_map(lightcurve_file):
+    rcid_map_file = lightcurve_file.replace('.txt', '.rcid_map')
+    if os.path.exists(rcid_map_file):
+        print('%s already exists. Skipping.' % rcid_map_file)
+        return
+
     objects_file = lightcurve_file.replace('.txt', '.objects')
 
     f_in = open(objects_file, 'r')
@@ -117,5 +117,4 @@ def generate_rcid_map(lightcurve_file):
 
     f_in.close()
 
-    rcid_map_file = objects_file.replace('.objects', '.rcid_map')
     save_rcid_map(rcid_map_file, rcid_map)

@@ -5,13 +5,13 @@ Create an objects file and rcip map for all lightcurve files in a directory.
 These initialization files speed up quick reading for zort.
 """
 
+import glob
 import argparse
 import sys
 import subprocess
 import numpy as np
 
-from zort.initialize import \
-    gather_lightcurve_files, generate_objects_file, generate_rcid_map
+from zort.initialize import generate_objects_file, generate_rcid_map
 
 
 def main():
@@ -40,7 +40,6 @@ def main():
             print('mpi4py must be installed to use --parallel mode.')
             sys.exit(0)
 
-    lightcurve_files = gather_lightcurve_files(args.lightcurve_file_directory)
     if args.parallelFlag:
         from mpi4py import MPI
         comm = MPI.COMM_WORLD
@@ -49,6 +48,9 @@ def main():
     else:
         rank = 0
         size = 1
+
+    lightcurve_files = glob.glob('%s/field*.txt' % args.lightcurve_file_directory)
+    lightcurve_files.sort()
 
     if rank == 0:
         print('Generating object files and RCID maps '
