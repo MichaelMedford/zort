@@ -158,6 +158,7 @@ class LightcurveFile:
                 continue
             for idx in idx_arr:
                 lightcurve_position = int(lightcurve_position_arr[idx])
-                obj = Object(self.filename, lightcurve_position)
+                obj = Object(self.filename, lightcurve_position,
+                             rcid_map=self.rcid_map)
                 objects.append(obj)
         return objects
