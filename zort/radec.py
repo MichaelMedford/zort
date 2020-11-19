@@ -4,9 +4,7 @@ radec.py
 """
 
 import os
-import glob
 import numpy as np
-from zort.lightcurveFile import LightcurveFile
 
 
 def load_ZTF_CCD_corners(ra=0, dec=0):
@@ -134,21 +132,3 @@ def return_rcid(field, ra, dec):
 
     print('No matching rcid found')
     return None
-
-
-def locate_objects(data_dir, ra, dec, radius=3.):
-    objects = []
-    fields = return_fields(ra, dec)
-    for field in fields:
-        rcid = return_rcid(field, ra, dec)
-
-        lightcurve_filenames = glob.glob('%s/field%06d*.txt' % (data_dir,
-                                                               field))
-        lightcurve_filenames = [f for f in lightcurve_filenames
-                                if 'obs' not in f]
-        for lightcurve_filename in lightcurve_filenames:
-            lightcurveFile = LightcurveFile(lightcurve_filename)
-            objects += lightcurveFile.locate_objects_by_radec(ra, dec, rcid,
-                                                              radius=radius)
-
-    return objects
