@@ -213,7 +213,8 @@ class Object:
             self.locate_siblings()
 
         if len(self.siblings) == 0:
-            self.plot_lightcurve(insert_radius=insert_radius)
+            self.plot_lightcurve(filename=filename,
+                                 insert_radius=insert_radius)
             return
         elif len(self.siblings) == 1:
             N_rows = 2
