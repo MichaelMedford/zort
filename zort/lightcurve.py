@@ -41,7 +41,7 @@ class Lightcurve:
         self.fluxerr = fluxerr
         self.clrcoeff = data['clrcoeff']
         self.catflags = data['catflags']
-        self.nepochs = float(len(self.mag))
+        self.nepochs = int(len(self.mag))
         self.mag_med = self._return_median(self.mag)
         self.mag_std = self._return_std(self.mag)
         self.flux_med = self._return_median(self.flux)
