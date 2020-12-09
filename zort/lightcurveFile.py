@@ -6,7 +6,9 @@ iteration through a lightcurve file in order to inspect each object's
 lightcurve. Filters can be applied to objects and/or lightcurves.
 """
 
+import os
 import pickle
+
 from zort.object import Object
 from zort.utils import return_filename
 from zort.utils import return_objects_filename
