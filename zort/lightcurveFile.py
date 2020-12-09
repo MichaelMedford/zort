@@ -48,7 +48,7 @@ class LightcurveFile:
         if my_interesting_filter(obj):
             interesting_objects.append(obj)
 
-    from zort.objcet import save_obejcts
+    from zort.object import save_objects
     save_objects('objects.list', interesting_objects)
 
     from zort.object import load_objects
@@ -88,6 +88,8 @@ class LightcurveFile:
         self.rcid_map = self.load_rcid_map()
         self.proc_rank = proc_rank
         self.proc_size = proc_size
+        self.fieldid = int(os.path.basename(filename).split('_')[0].
+                           replace('field', ''))
         self.objects_file_counter = 0
         self.apply_catmask = apply_catmask
 
@@ -144,8 +146,7 @@ class LightcurveFile:
 
     def locate_objects_by_radec(self, ra, dec, rcid=None, radius_as=2):
         if rcid is None:
-            fieldid = int(self.filename.split('_')[0].replace('field', ''))
-            rcid = return_rcid(fieldid, ra, dec)
+            rcid = return_rcid(self.fieldid, ra, dec)
             if rcid is None:
                 return
 
