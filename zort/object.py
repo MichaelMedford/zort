@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from zort.lightcurve import Lightcurve
 from zort.utils import return_filename, return_objects_filename, \
-    return_rcid_map_filename, filterid_dict
+    return_radec_map_filename, filterid_dict
 
 
 ################################
@@ -32,11 +32,11 @@ class Object:
     """
 
     def __init__(self, filename, lightcurve_position,
-                 apply_catmask=False, PS_g_minus_r=0, rcid_map=None):
+                 apply_catmask=False, PS_g_minus_r=0, radec_map=None):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
         self.objects_filename = return_objects_filename(filename)
-        self.rcid_map_filename = return_rcid_map_filename(filename)
+        self.radec_map_filename = return_radec_map_filename(filename)
 
         self.lightcurve_position = int(lightcurve_position)
         params = self._load_params()
@@ -52,10 +52,10 @@ class Object:
         self.PS_g_minus_r = PS_g_minus_r
         self.lightcurve = self._load_lightcurve()
         self.siblings = []
-        if rcid_map:
-            self.rcid_map = rcid_map
+        if radec_map:
+            self.radec_map = radec_map
         else:
-            self.rcid_map = None
+            self.radec_map = None
 
     def __repr__(self):
         title = 'Filename: %s\n' % self.filename.split('/')[-1]
@@ -95,10 +95,10 @@ class Object:
         # Defined by ZTF convention
         return filterid_dict[self.filterid]
 
-    def load_rcid_map(self):
-        rcid_map_filename = self.rcid_map_filename
-        rcid_map = pickle.load(open(rcid_map_filename, 'rb'))
-        return rcid_map
+    def load_radec_map(self):
+        radec_map_filename = self.radec_map_filename
+        radec_map = pickle.load(open(radec_map_filename, 'rb'))
+        return radec_map
 
     def return_siblings_filename(self):
         siblings_filename = self.filename.replace('.txt', '.siblings')
@@ -127,11 +127,11 @@ class Object:
             print('Locating siblings for ZTF Object %i' % self.objectid)
             print('-- Object location: %.5f, %.5f ...' % (self.ra, self.dec))
 
-        if self.rcid_map is None:
-            self.rcid_map = self.load_rcid_map()
+        if self.radec_map is None:
+            self.radec_map = self.load_radec_map()
 
         # Searching for siblings in the opposite
-        # filtered sections of the rcid_map
+        # filtered sections of the radec_map
         sibling_filterids = [i for i in [1, 2, 3] if i != self.filterid]
         if skip_filterids:
             sibling_filterids = [i for i in sibling_filterids
@@ -140,16 +140,16 @@ class Object:
 
         for filterid in sibling_filterids:
             color = filterid_dict[filterid]
-            if filterid not in self.rcid_map:
+            if filterid not in self.radec_map:
                 if printFlag:
-                    print('-- rcid_map does not contain filter %s' % color)
+                    print('-- radec_map does not contain filter %s' % color)
                 continue
-            elif rcid not in self.rcid_map[filterid]:
+            elif rcid not in self.radec_map[filterid]:
                 if printFlag:
-                    print('-- rcid_map %s does not have rcid %i' % (color, rcid))
+                    print('-- radec_map %s does not have rcid %i' % (color, rcid))
                 continue
 
-            kdtree, lightcurve_position_arr = self.rcid_map[filterid][rcid]
+            kdtree, lightcurve_position_arr = self.radec_map[filterid][rcid]
             idx = kdtree.query_ball_point((self.ra, self.dec), radius_deg)
             if len(idx) == 0:
                 continue

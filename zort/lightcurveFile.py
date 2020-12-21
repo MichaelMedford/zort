@@ -12,7 +12,7 @@ import pickle
 from zort.object import Object
 from zort.utils import return_filename
 from zort.utils import return_objects_filename
-from zort.utils import return_rcid_map_filename
+from zort.utils import return_radec_map_filename
 from zort.radec import return_rcid
 
 
@@ -83,11 +83,11 @@ class LightcurveFile:
         # Load filenames and check for existence
         self.filename = return_filename(filename)
         self.objects_filename = return_objects_filename(filename)
-        self.rcid_map_filename = return_rcid_map_filename(filename)
+        self.radec_map_filename = return_radec_map_filename(filename)
 
         self.init_object_position = init_object_position
         self.objects_file = self.return_objects_file()
-        self.rcid_map = self.load_rcid_map()
+        self.radec_map = self.load_radec_map()
         self.proc_rank = proc_rank
         self.proc_size = proc_size
         self.fieldid = int(os.path.basename(filename).split('_')[0].
@@ -135,16 +135,16 @@ class LightcurveFile:
         lightcurve_position = self._return_parsed_line(line)[-1]
         return Object(self.filename, lightcurve_position,
                       apply_catmask=self.apply_catmask,
-                      rcid_map=self.rcid_map)
+                      radec_map=self.radec_map)
 
     def return_objects_file(self):
         file = open(self.objects_filename, 'r')
         file.seek(self.init_object_position)
         return file
 
-    def load_rcid_map(self):
-        rcid_map = pickle.load(open(self.rcid_map_filename, 'rb'))
-        return rcid_map
+    def load_radec_map(self):
+        radec_map = pickle.load(open(self.radec_map_filename, 'rb'))
+        return radec_map
 
     def locate_objects_by_radec(self, ra, dec, rcid=None, radius_as=2):
         if rcid is None:
@@ -154,14 +154,14 @@ class LightcurveFile:
 
         radius_deg = radius_as / 3600.
         objects = []
-        for filterid in self.rcid_map:
-            kdtree, lightcurve_position_arr = self.rcid_map[filterid][rcid]
+        for filterid in self.radec_map:
+            kdtree, lightcurve_position_arr = self.radec_map[filterid][rcid]
             idx_arr = kdtree.query_ball_point((ra, dec), radius_deg)
             if len(idx_arr) == 0:
                 continue
             for idx in idx_arr:
                 lightcurve_position = int(lightcurve_position_arr[idx])
                 obj = Object(self.filename, lightcurve_position,
-                             rcid_map=self.rcid_map, apply_catmask=self.apply_catmask)
+                             radec_map=self.radec_map, apply_catmask=self.apply_catmask)
                 objects.append(obj)
         return objects

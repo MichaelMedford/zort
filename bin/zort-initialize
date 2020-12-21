@@ -11,7 +11,7 @@ import sys
 import subprocess
 import numpy as np
 
-from zort.initialize import generate_objects_file, generate_rcid_map
+from zort.initialize import generate_objects_file, generate_radec_map
 
 
 def main():
@@ -59,7 +59,7 @@ def main():
     my_lightcurve_files = np.array_split(lightcurve_files, size)[rank]
     for lightcurve_file in my_lightcurve_files:
         generate_objects_file(lightcurve_file)
-        generate_rcid_map(lightcurve_file)
+        generate_radec_map(lightcurve_file)
 
 
 if __name__ == '__main__':

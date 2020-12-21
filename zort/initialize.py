@@ -45,31 +45,31 @@ def generate_objects_file(lightcurve_file):
     f_in.close()
 
 
-def save_rcid_map(DR1_object_file, rcid_map):
-    rcid_map_filename = DR1_object_file.replace('.objects', '.rcid_map')
-    with open(rcid_map_filename, 'wb') as fileObj:
-        pickle.dump(rcid_map, fileObj)
+def save_radec_map(DR1_object_file, radec_map):
+    radec_map_filename = DR1_object_file.replace('.objects', '.radec_map')
+    with open(radec_map_filename, 'wb') as fileObj:
+        pickle.dump(radec_map, fileObj)
 
 
-def return_rcid_map_size(rcid_map):
-    rcid_map_size = 0
-    for _, v in rcid_map.items():
-        rcid_map_size += len(v)
-    return rcid_map_size
+def return_radec_map_size(radec_map):
+    radec_map_size = 0
+    for _, v in radec_map.items():
+        radec_map_size += len(v)
+    return radec_map_size
 
 
-def return_rcid_map_filesize(rcid_map):
-    rcid_map_filesize = 0
-    for k, _ in rcid_map.items():
-        for _, t in rcid_map[k].items():
-            rcid_map_filesize += t[1] - t[0]
-    return rcid_map_filesize
+def return_radec_map_filesize(radec_map):
+    radec_map_filesize = 0
+    for k, _ in radec_map.items():
+        for _, t in radec_map[k].items():
+            radec_map_filesize += t[1] - t[0]
+    return radec_map_filesize
 
 
-def generate_rcid_map(lightcurve_file):
-    rcid_map_file = lightcurve_file.replace('.txt', '.rcid_map')
-    if os.path.exists(rcid_map_file):
-        print('%s already exists. Skipping.' % rcid_map_file)
+def generate_radec_map(lightcurve_file):
+    radec_map_file = lightcurve_file.replace('.txt', '.radec_map')
+    if os.path.exists(radec_map_file):
+        print('%s already exists. Skipping.' % radec_map_file)
         return
 
     objects_file = lightcurve_file.replace('.txt', '.objects')
@@ -80,7 +80,7 @@ def generate_rcid_map(lightcurve_file):
     rcid, rcid_current = None, None
     filterid, filterid_current = None, None
     ra_arr, dec_arr, lightcurve_position_arr = [], [], []
-    rcid_map = defaultdict(dict)
+    radec_map = defaultdict(dict)
 
     for line in f_in:
         data = line.replace('\n', '').split(',')
@@ -97,7 +97,7 @@ def generate_rcid_map(lightcurve_file):
         if rcid != rcid_current:
             objects = np.array([ra_arr, dec_arr]).T
             kdtree = cKDTree(objects)
-            rcid_map[filterid_current][rcid_current] = \
+            radec_map[filterid_current][rcid_current] = \
                 (kdtree, lightcurve_position_arr)
 
             rcid_current = rcid
@@ -112,9 +112,9 @@ def generate_rcid_map(lightcurve_file):
 
     objects = np.array([ra_arr, dec_arr]).T
     kdtree = cKDTree(objects)
-    rcid_map[filterid_current][rcid_current] = \
+    radec_map[filterid_current][rcid_current] = \
         (kdtree, lightcurve_position_arr)
 
     f_in.close()
 
-    save_rcid_map(rcid_map_file, rcid_map)
+    save_radec_map(radec_map_file, radec_map)
