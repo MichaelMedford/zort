@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 """
 initialize.py
-Initialization of object and rcip_map files.
+Initialization of object, object_map and r_map files.
 """
 
 
@@ -19,7 +19,7 @@ def generate_objects_file(lightcurve_file):
         return
 
     f_in = open(lightcurve_file, 'r')
-
+    object_map = {}
     object_keys = ['id', 'nepochs', 'filterid',
                    'fieldid', 'rcid', 'ra', 'dec', 'lightcurve_position']
     with open(objects_file, 'w') as f_out:
@@ -42,7 +42,14 @@ def generate_objects_file(lightcurve_file):
             lightcurve_position = f_in.tell() - len(line)
             f_out.write('%s,%i\n' % (data_str, lightcurve_position))
 
+            object_id = int(data_str.split(',')[0])
+            object_map[object_id] = lightcurve_position
+
     f_in.close()
+
+    objects_file = lightcurve_file.replace('.txt', '.objects_map')
+    with open(objects_file, 'wb') as fileObj:
+        pickle.dump(object_map, fileObj)
 
 
 def save_radec_map(DR1_object_file, radec_map):
