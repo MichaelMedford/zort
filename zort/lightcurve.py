@@ -25,13 +25,15 @@ class Lightcurve:
     of an Object class.
     """
 
-    def __init__(self, filename, lightcurve_position, apply_catmask=True):
+    def __init__(self, filename, lightcurve_position,
+                 apply_catmask=True, PS_g_minus_r=0):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
 
         self.lightcurve_position = lightcurve_position
         self.object_id = None  # set in self._load_lightcurve
         self.apply_catmask = apply_catmask
+        self.PS_g_minus_r = PS_g_minus_r
         data = self._load_lightcurve()
         self.hmjd = data['hmjd']
         self.mag = data['mag']
@@ -80,6 +82,9 @@ class Lightcurve:
         dtype = [('hmjd', float), ('mag', float), ('magerr', float),
                  ('clrcoeff', float), ('catflags', int)]
         data = np.array(data, dtype=dtype)
+
+        # Apply the color correction
+        data['mag'] = data['mag'] + data['clrcoeff'] * self.PS_g_minus_r
 
         # Apply the quality cut mask
         if self.apply_catmask:

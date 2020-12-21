@@ -32,7 +32,7 @@ class Object:
     """
 
     def __init__(self, filename, lightcurve_position,
-                 apply_catmask=False, rcid_map=None):
+                 apply_catmask=False, PS_g_minus_r=0, rcid_map=None):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
         self.objects_filename = return_objects_filename(filename)
@@ -49,6 +49,7 @@ class Object:
         self.dec = params['dec']
         self.color = self._return_filterid_color()
         self.apply_catmask = apply_catmask
+        self.PS_g_minus_r = PS_g_minus_r
         self.lightcurve = self._load_lightcurve()
         self.siblings = []
         if rcid_map:
@@ -105,7 +106,8 @@ class Object:
 
     def _load_lightcurve(self):
         return Lightcurve(self.filename, self.lightcurve_position,
-                          apply_catmask=self.apply_catmask)
+                          apply_catmask=self.apply_catmask,
+                          PS_g_minus_r=self.PS_g_minus_r)
 
     def set_sibling(self, sibling_lightcurve_position, printFlag=False):
         # Assign the sibling to its own object instance
