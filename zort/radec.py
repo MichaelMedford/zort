@@ -3,11 +3,27 @@
 radec.py
 """
 
+from astropy import units as u
+from astropy.coordinates import SkyCoord
+from astropy.wcs import WCS
 import os
 import numpy as np
 
 
 def load_ZTF_CCD_corners(ra=0, dec=0):
+    wcs = WCS({'CTYPE1': 'RA---TAN',
+               'CTYPE2': 'DEC--TAN',
+               'CRPIX1': 0,
+               'CRPIX2': 0,
+               'CRVAL1': ra,
+               'CRVAL2': dec,
+               'CUNIT1': 'deg',
+               'CUNIT2': 'deg',
+               'CD1_1': 1,
+               'CD1_2': 0,
+               'CD2_1': 0,
+               'CD2_2': 1})
+
     here = os.path.abspath(os.path.dirname(__file__))
     ZTF_CCD_layout_fname = '%s/data/ZTF_CCD_Layout.tbl' % here
     with open(ZTF_CCD_layout_fname, 'r') as f:
@@ -18,13 +34,11 @@ def load_ZTF_CCD_corners(ra=0, dec=0):
         ra_offset, dec_offset, chip = line.split()
         ra_offset, dec_offset = -float(ra_offset), float(dec_offset)
         chip = int(chip)
-        ra_offset /= np.cos(np.radians(dec + dec_offset))
-        ra_offset += ra
-        dec_offset += dec
+        ra_corner, dec_corner = wcs.all_pix2world(ra_offset, dec_offset, 1)
         if chip not in ZTF_CCD_corners.keys():
-            ZTF_CCD_corners[chip] = [[ra_offset, dec_offset]]
+            ZTF_CCD_corners[chip] = [[ra_corner, dec_corner]]
         else:
-            ZTF_CCD_corners[chip].append([ra_offset, dec_offset])
+            ZTF_CCD_corners[chip].append([ra_corner, dec_corner])
 
     for i in range(1, 17):
         ZTF_CCD_corners[i] = np.array(ZTF_CCD_corners[i])
@@ -32,32 +46,60 @@ def load_ZTF_CCD_corners(ra=0, dec=0):
     return ZTF_CCD_corners
 
 
+def _calculate_two_point_midpoint(ra0, dec0, ra1, dec1):
+    coord1 = SkyCoord(ra0 * u.deg, dec0 * u.deg, frame='icrs')
+    coord2 = SkyCoord(ra1 * u.deg, dec1 * u.deg, frame='icrs')
+    pa = coord1.position_angle(coord2)
+    sep = coord1.separation(coord2)
+    midpoint = coord1.directional_offset_by(pa, sep / 2)
+    return midpoint.ra.value, midpoint.dec.value
+
+
 def return_ZTF_RCID_corners(ra, dec):
     ZTF_CCD_corners = load_ZTF_CCD_corners(ra, dec)
 
     ZTF_RCID_corners = {}
-    rcid_counter = 0
-    for CCD, corners_tmp in ZTF_CCD_corners.items():
-        corners = corners_tmp[1:]
-        corners = np.vstack((corners, corners_tmp[0]))
+    for CCD, CCD_corners_single in ZTF_CCD_corners.items():
+        CCD_bottom_right = CCD_corners_single[0]
+        CCD_top_right = CCD_corners_single[1]
+        CCD_top_left = CCD_corners_single[2]
+        CCD_bottom_left = CCD_corners_single[3]
+
+        right_midpoint = _calculate_two_point_midpoint(*CCD_bottom_right,
+                                                       *CCD_top_right)
+        left_midpoint = _calculate_two_point_midpoint(*CCD_top_left,
+                                                      *CCD_bottom_left)
+        top_midpoint = _calculate_two_point_midpoint(*CCD_top_right,
+                                                     *CCD_top_left)
+        bottom_midpoint = _calculate_two_point_midpoint(*CCD_bottom_right,
+                                                        *CCD_bottom_left)
+        CCD_midpoint = _calculate_two_point_midpoint(*left_midpoint,
+                                                     *right_midpoint)
 
         for quad in np.arange(4):
-            top_right = ((corners[quad][0] + corners[0][0]) / 2.,
-                         (corners[quad][1] + corners[1][1]) / 2.)
-            top_left = ((corners[quad][0] + corners[1][0]) / 2.,
-                        (corners[quad][1] + corners[1][1]) / 2.)
-            bot_left = ((corners[quad][0] + corners[2][0]) / 2.,
-                        (corners[quad][1] + corners[2][1]) / 2.)
-            bot_right = ((corners[quad][0] + corners[3][0]) / 2.,
-                         (corners[quad][1] + corners[3][1]) / 2.)
+            if quad == 0:
+                quad_corners = np.array([CCD_top_right,
+                                         top_midpoint,
+                                         CCD_midpoint,
+                                         right_midpoint])
+            elif quad == 1:
+                quad_corners = np.array([top_midpoint,
+                                         CCD_top_left,
+                                         left_midpoint,
+                                         CCD_midpoint])
+            elif quad == 2:
+                quad_corners = np.array([CCD_midpoint,
+                                         left_midpoint,
+                                         CCD_bottom_left,
+                                         bottom_midpoint])
+            elif quad == 3:
+                quad_corners = np.array([right_midpoint,
+                                         CCD_midpoint,
+                                         bottom_midpoint,
+                                         CCD_bottom_right])
 
-            quad_corners = np.array([[top_right[0], top_right[1]],
-                                     [top_left[0], top_left[1]],
-                                     [bot_left[0], bot_left[1]],
-                                     [bot_right[0], bot_right[1]]])
-            ZTF_RCID_corners[rcid_counter] = quad_corners
-
-            rcid_counter += 1
+            rcid = 4 * (CCD - 1) + quad
+            ZTF_RCID_corners[rcid] = quad_corners
 
     return ZTF_RCID_corners
 
