@@ -6,6 +6,8 @@ radec.py
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.wcs import WCS
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
 import os
 import numpy as np
 
@@ -123,14 +125,12 @@ def test_within_CCD_corners(ra, dec, ZTF_CCD_corners):
     upper_right = ZTF_CCD_corners[13][1]
     upper_left = ZTF_CCD_corners[16][2]
 
-    cond1 = ra >= np.min([lower_left[0], upper_left[0]])
-    cond2 = ra <= np.max([lower_right[0], upper_right[0]])
-    cond3 = dec >= np.min([lower_left[1], lower_right[1]])
-    cond4 = dec <= np.min([upper_left[1], upper_right[1]])
-    if cond1 and cond2 and cond3 and cond4:
-        return True
-    else:
-        return False
+    polygon = Polygon([lower_right,
+                       lower_left,
+                       upper_right,
+                       upper_left])
+    point = Point(ra, dec)
+    return polygon.contains(point)
 
 
 def return_fields(ra, dec):
@@ -151,14 +151,12 @@ def test_within_RCID_corners(ra, dec, ZTF_RCID_corners_single):
     upper_right = ZTF_RCID_corners_single[0]
     upper_left = ZTF_RCID_corners_single[1]
 
-    cond1 = ra >= np.min([lower_left[0], upper_left[0]])
-    cond2 = ra <= np.max([lower_right[0], upper_right[0]])
-    cond3 = dec >= np.min([lower_left[1], lower_right[1]])
-    cond4 = dec <= np.min([upper_left[1], upper_right[1]])
-    if cond1 and cond2 and cond3 and cond4:
-        return True
-    else:
-        return False
+    polygon = Polygon([lower_right,
+                       lower_left,
+                       upper_right,
+                       upper_left])
+    point = Point(ra, dec)
+    return polygon.contains(point)
 
 
 def return_rcid(field, ra, dec):
