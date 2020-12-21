@@ -18,7 +18,7 @@ def load_ZTF_CCD_corners(ra=0, dec=0):
         ra_offset, dec_offset, chip = line.split()
         ra_offset, dec_offset = -float(ra_offset), float(dec_offset)
         chip = int(chip)
-        ra_offset /= np.cos(np.radians(dec))
+        ra_offset /= np.cos(np.radians(dec + dec_offset))
         ra_offset += ra
         dec_offset += dec
         if chip not in ZTF_CCD_corners.keys():
