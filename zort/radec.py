@@ -127,8 +127,8 @@ def test_within_CCD_corners(ra, dec, ZTF_CCD_corners):
 
     polygon = Polygon([lower_right,
                        lower_left,
-                       upper_right,
-                       upper_left])
+                       upper_left,
+                       upper_right])
     point = Point(ra, dec)
     return polygon.contains(point)
 
@@ -153,8 +153,8 @@ def test_within_RCID_corners(ra, dec, ZTF_RCID_corners_single):
 
     polygon = Polygon([lower_right,
                        lower_left,
-                       upper_right,
-                       upper_left])
+                       upper_left,
+                       upper_right])
     point = Point(ra, dec)
     return polygon.contains(point)
 
