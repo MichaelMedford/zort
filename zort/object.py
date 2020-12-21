@@ -13,7 +13,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from zort.lightcurve import Lightcurve
 from zort.utils import return_filename, return_objects_filename, \
-    return_radec_map_filename, filterid_dict
+    return_objects_map_filename, return_radec_map_filename, \
+    filterid_dict
 
 
 ################################
@@ -31,14 +32,21 @@ class Object:
     coincident objects with the locate_siblings function.
     """
 
-    def __init__(self, filename, lightcurve_position,
-                 apply_catmask=False, PS_g_minus_r=0, radec_map=None):
+    def __init__(self, filename, object_id,
+                 apply_catmask=False, PS_g_minus_r=0,
+                 objects_map=None, radec_map=None):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
         self.objects_filename = return_objects_filename(filename)
+        self.objects_map_filename = return_objects_map_filename(filename)
         self.radec_map_filename = return_radec_map_filename(filename)
 
-        self.lightcurve_position = int(lightcurve_position)
+        if objects_map:
+            self.objects_map = objects_map
+        else:
+            self.objects_map = self.load_objects_map()
+        self.lightcurve_position = self.objects_map[object_id]
+
         params = self._load_params()
         self.objectid = params['objectid']
         self.nepochs = params['nepochs']
@@ -51,7 +59,9 @@ class Object:
         self.apply_catmask = apply_catmask
         self.PS_g_minus_r = PS_g_minus_r
         self.lightcurve = self._load_lightcurve()
-        self.siblings = []
+        self.siblings = None
+        self.nsiblings = 0
+
         if radec_map:
             self.radec_map = radec_map
         else:
@@ -59,7 +69,6 @@ class Object:
 
     def __repr__(self):
         title = 'Filename: %s\n' % self.filename.split('/')[-1]
-        title += 'Lightcurve Buffer Position: %i\n' % self.lightcurve_position
         title += 'Object ID: %i\n' % self.objectid
         title += 'Filter ID: %i | Color: %s\n' % (self.filterid, self.color)
         title += 'Ra/Dec: (%.5f, %.5f)\n' % (self.ra, self.dec)
@@ -67,7 +76,8 @@ class Object:
             title += '%i Epochs passing catmask\n' % self.lightcurve.nepochs
         else:
             title += '%i Epochs without applying catmask\n' % self.lightcurve.nepochs
-        title += '%i siblings identified\n' % len(self.siblings)
+        title += '%i siblings identified\n' % self.nsiblings
+        title += 'Lightcurve Buffer Position: %i\n' % self.lightcurve_position
 
         return title
 
@@ -95,6 +105,11 @@ class Object:
         # Defined by ZTF convention
         return filterid_dict[self.filterid]
 
+    def load_objects_map(self):
+        objects_map_filename = self.objects_map_filename
+        objects_map = pickle.load(open(objects_map_filename, 'rb'))
+        return objects_map
+
     def load_radec_map(self):
         radec_map_filename = self.radec_map_filename
         radec_map = pickle.load(open(radec_map_filename, 'rb'))
@@ -109,16 +124,19 @@ class Object:
                           apply_catmask=self.apply_catmask,
                           PS_g_minus_r=self.PS_g_minus_r)
 
-    def set_sibling(self, sibling_lightcurve_position, printFlag=False):
+    def set_siblings(self, sibling_object_ids, printFlag=False):
         # Assign the sibling to its own object instance
-        sibling = Object(self.filename, sibling_lightcurve_position)
-        self.siblings.append(sibling)
-
-        if printFlag:
-            print('---- Sibling found at %.5f, %.5f !' % (
-                sibling.ra, sibling.dec))
-            print('---- Original Color: %s | Sibling Color: %s' % (
-                self.color, sibling.color))
+        siblings = []
+        for object_id in sibling_object_ids:
+            sib = Object(self.filename, object_id)
+            siblings.append(sib)
+            if printFlag:
+                print('---- Sibling found at %.5f, %.5f !' % (
+                    sib.ra, sib.dec))
+                print('---- Original Color: %s | Sibling Color: %s' % (
+                    self.color, sib.color))
+        self.siblings = siblings
+        self.nsiblings = len(siblings)
 
     def locate_siblings(self, radius_as=2,
                         skip_filterids=None, printFlag=False):
@@ -137,6 +155,7 @@ class Object:
             sibling_filterids = [i for i in sibling_filterids
                                  if i not in skip_filterids]
         rcid = self.rcid
+        siblings_object_ids = []
 
         for filterid in sibling_filterids:
             color = filterid_dict[filterid]
@@ -149,17 +168,20 @@ class Object:
                     print('-- radec_map %s does not have rcid %i' % (color, rcid))
                 continue
 
-            kdtree, lightcurve_position_arr = self.radec_map[filterid][rcid]
+            kdtree, object_id_arr = self.radec_map[filterid][rcid]
             idx = kdtree.query_ball_point((self.ra, self.dec), radius_deg)
             if len(idx) == 0:
                 continue
-            siblings_lightcurve_position = int(lightcurve_position_arr[idx[0]])
+            sibling_object_id = int(object_id_arr[idx[0]])
 
-            if siblings_lightcurve_position is None:
+            if sibling_object_id is None:
                 if printFlag:
                     print('---- No siblings found for filter %i' % filterid)
             else:
-                self.set_sibling(siblings_lightcurve_position, printFlag)
+                siblings_object_ids.append(sibling_object_id)
+
+        self.set_siblings(siblings_object_ids, printFlag)
+
 
     def plot_lightcurve(self, filename=None, insert_radius=30):
         hmjd_min = np.min(self.lightcurve.hmjd) - 10

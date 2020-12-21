@@ -9,7 +9,8 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from zort.lightcurve import Lightcurve
-from zort.utils import return_filename, return_objects_filename, \
+from zort.object import Object
+from zort.utils import return_filename, return_objects_map_filename, \
     return_radec_map_filename, filterid_dict
 
 
@@ -23,55 +24,94 @@ class Source:
     """
     A source contains one or more Objects that are spatially coincident, each
     containing a single color lightcurve of a ZTF object. All objects within
-    source must be from the same lightcurve file.
+    source must be from the same lightcurve file.d
     """
 
-    def __init__(self, filename, lightcurve_position_g=None,
-                 lightcurve_position_r=None, lightcurve_position_i=None,
-                 apply_catmask=False, PS_g_minus_r=0, radec_map=None):
+    def __init__(self, filename, object_id_g=None,
+                 object_id_r=None, object_id_i=None,
+                 apply_catmask=False, PS_g_minus_r=0,
+                 objects_map=None,
+                 radec_map=None):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
-        self.objects_filename = return_objects_filename(filename)
+        self.objects_map_filename = return_objects_map_filename(filename)
         self.radec_map_filename = return_radec_map_filename(filename)
 
-        self.lightcurve_position_g = lightcurve_position_g
-        self.lightcurve_position_r = lightcurve_position_r
-        self.lightcurve_position_i = lightcurve_position_i
-        self._check_lightcurve_positions()
+        self._check_object_ids(object_id_g, object_id_r, object_id_i)
 
         self.apply_catmask = apply_catmask
         self.PS_g_minus_r = PS_g_minus_r
+        if objects_map:
+            self.objects_map = objects_map
+        else:
+            self.objects_map = self.load_objects_map()
         if radec_map:
             self.radec_map = radec_map
         else:
             self.radec_map = None
 
-        self._load_objects()
+        objects = self._load_objects(object_id_g, object_id_r, object_id_i)
+        self.objects = objects
+        self.object_g = objects[0]
+        self.object_r = objects[1]
+        self.object_i = objects[2]
+
+        radec = self._calculate_radec()
+        self.ra = radec[0]
+        self.dec = radec[1]
+
+    def _return_object_print_info(self, object):
+        if object is None:
+            objectid, nepochs = None, None
+        else:
+            objectid, nepochs = object.objectid, object.nepochs
+        return {'id': objectid, 'nepochs': nepochs}
 
     def __repr__(self):
         title = 'Filename: %s\n' % self.filename.split('/')[-1]
-        title += 'Lightcurve Buffer Position: %i\n' % self.lightcurve_position
-        title += 'Object ID: %i\n' % self.objectid
-        title += 'Filter ID: %i | Color: %s\n' % (self.filterid, self.color)
+        title += 'Object ID g: {id} | nepochs: {nepochs}\n'.format(
+            **self._return_object_print_info(self.object_g))
+        title += 'Object ID r: {id} | nepochs: {nepochs}\n'.format(
+            **self._return_object_print_info(self.object_r))
+        title += 'Object ID i: {id} | nepochs: {nepochs}\n'.format(
+            **self._return_object_print_info(self.object_i))
         title += 'Ra/Dec: (%.5f, %.5f)\n' % (self.ra, self.dec)
-        if self.apply_catmask:
-            title += '%i Epochs passing catmask\n' % self.lightcurve.nepochs
-        else:
-            title += '%i Epochs without applying catmask\n' % self.lightcurve.nepochs
-        title += '%i siblings identified\n' % len(self.siblings)
 
         return title
 
-    def _check_lightcurve_positions(self):
-        if self.lightcurve_position_g is None \
-                and self.lightcurve_position_r is None \
-                and self.lightcurve_position_i is None:
+    def _check_object_ids(self, object_id_g, object_id_r, object_id_i):
+        if object_id_g is None \
+                and object_id_r is None \
+                and object_id_i is None:
             raise Exception('Source must be instantiated '
-                            'with at least one lightcurve position')
+                            'with at least one object id.')
 
-    def _load_objects(self):
+    def _load_object(self, object_id, color):
+        if object_id is None:
+            return None
+        obj = Object(self.filename, object_id, objects_map=self.objects_map)
+        if obj.color != color:
+            str = "Color of 'object_id_{color}' is {color_obj}. " \
+                  "Must be {color}.".format(color=color,
+                                            color_obj=obj.color)
+            raise Exception(str)
+        return obj
 
+    def _load_objects(self, object_id_g, object_id_r, object_id_i):
+        object_g = self._load_object(object_id_g, 'g')
+        object_r = self._load_object(object_id_r, 'r')
+        object_i = self._load_object(object_id_i, 'i')
+        return object_g, object_r, object_i
 
+    def _calculate_radec(self):
+        ra = np.mean([obj.ra for obj in self.objects if obj is not None])
+        dec = np.mean([obj.dec for obj in self.objects if obj is not None])
+        return ra, dec
+
+    def load_objects_map(self):
+        objects_map_filename = self.objects_map_filename
+        objects_map = pickle.load(open(objects_map_filename, 'rb'))
+        return objects_map
 
     def load_radec_map(self):
         radec_map_filename = self.radec_map_filename
@@ -79,7 +119,22 @@ class Source:
         return radec_map
 
 
-def save_objects(filename, objects, overwrite=False):
+def create_source_from_object(object, locate_siblings=True, radius_as=2, skip_filterids=None):
+    if locate_siblings and object.siblings is None:
+        object.locate_siblings(radius_as=radius_as,
+                               skip_filterids=skip_filterids)
+    source_dict = {'g': None, 'r': None, 'i': None,
+                   object.color: object.objectid}
+    for sibling in object.siblings:
+        source_dict[sibling.color] = sibling.objectid
+
+    return Source(filename=object.filename,
+                  object_id_g=source_dict['g'],
+                  object_id_r=source_dict['r'],
+                  object_id_i=source_dict['i'])
+
+
+def save_sources(filename, sources, overwrite=False):
     if os.path.exists(filename) and not overwrite:
         print('%s already exists, exiting without saving objects. '
               'Set overwrite=True to enable writing over existing '
@@ -87,14 +142,20 @@ def save_objects(filename, objects, overwrite=False):
         return None
 
     with open(filename, 'w') as f:
-        for obj in objects:
-            f.write('%s,%i\n' % (obj.filename, obj.lightcurve_position))
+        for source in sources:
+            f.write('%s,%s,%s,%s\n' % (source.filename,
+                                       source.object_id_g,
+                                       source.object_id_r,
+                                       source.object_id_i))
 
 
-def load_objects(filename):
-    objects = []
+def load_sources(filename):
+    sources = []
     for line in open(filename, 'r'):
-        filename, lightcurve_position = line.replace('\n', '').split(',')
-        objects.append(Object(filename, lightcurve_position))
+        filename, object_id_g, object_id_r, object_id_i = line.replace('\n', '').split(',')
+        sources.append(Source(filename,
+                              object_id_g=object_id_g,
+                              object_id_r=object_id_r,
+                              object_id_i=object_id_i))
 
-    return objects
+    return sources

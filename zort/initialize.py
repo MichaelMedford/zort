@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 """
 initialize.py
-Initialization of object, object_map and r_map files.
+Initialization of object, object_map and radec_map files.
 """
 
 
@@ -86,12 +86,13 @@ def generate_radec_map(lightcurve_file):
 
     rcid, rcid_current = None, None
     filterid, filterid_current = None, None
-    ra_arr, dec_arr, lightcurve_position_arr = [], [], []
+    ra_arr, dec_arr, object_id_arr = [], [], []
     radec_map = defaultdict(dict)
 
     for line in f_in:
         data = line.replace('\n', '').split(',')
 
+        object_id = int(data[0])
         rcid = int(data[4])
         filterid = int(data[2])
 
@@ -105,22 +106,21 @@ def generate_radec_map(lightcurve_file):
             objects = np.array([ra_arr, dec_arr]).T
             kdtree = cKDTree(objects)
             radec_map[filterid_current][rcid_current] = \
-                (kdtree, lightcurve_position_arr)
+                (kdtree, object_id_arr)
 
             rcid_current = rcid
             filterid_current = filterid
-            ra_arr, dec_arr, lightcurve_position_arr = [], [], []
+            ra_arr, dec_arr, object_id_arr = [], [], []
 
         ra, dec = float(data[5]), float(data[6])
-        lightcurve_position = int(data[-1])
         ra_arr.append(ra)
         dec_arr.append(dec)
-        lightcurve_position_arr.append(lightcurve_position)
+        object_id_arr.append(object_id)
 
     objects = np.array([ra_arr, dec_arr]).T
     kdtree = cKDTree(objects)
     radec_map[filterid_current][rcid_current] = \
-        (kdtree, lightcurve_position_arr)
+        (kdtree, object_id_arr)
 
     f_in.close()
 

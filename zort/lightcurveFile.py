@@ -11,8 +11,9 @@ import pickle
 
 from zort.object import Object
 from zort.utils import return_filename
-from zort.utils import return_objects_filename
-from zort.utils import return_radec_map_filename
+from zort.utils import return_objects_filename, \
+    return_radec_map_filename, \
+    return_objects_map_filename
 from zort.radec import return_rcid
 
 
@@ -134,8 +135,7 @@ class LightcurveFile:
     def return_object(self, line):
         lightcurve_position = self._return_parsed_line(line)[-1]
         return Object(self.filename, lightcurve_position,
-                      apply_catmask=self.apply_catmask,
-                      radec_map=self.radec_map)
+                      apply_catmask=self.apply_catmask)
 
     def return_objects_file(self):
         file = open(self.objects_filename, 'r')
@@ -165,3 +165,28 @@ class LightcurveFile:
                              radec_map=self.radec_map, apply_catmask=self.apply_catmask)
                 objects.append(obj)
         return objects
+
+    def _extract_object_by_color(self, objects, color):
+        objects_color = [obj for obj in objects if obj.color == color]
+        if len(objects_color) == 0:
+            return None
+        elif len(objects_color) == 1:
+            return objects_color[0]
+        else:
+            print('Multiple objects found for filter %s. '
+                  'Returning first.' % color)
+            return objects_color[0]
+
+    def locate_source_by_radec(self, ra, dec, rcid=None, radius_as=2):
+        objects = locate_objects_by_radec(ra, dec, rcid, radius_as)
+        g_object = _extract_object_by_color(objects, 'g')
+        r_object = _extract_object_by_color(objects, 'r')
+        i_object = _extract_object_by_color(objects, 'i')
+        if g_object is None and r_object is None and i_object is None:
+            return None
+        source = Source(object_id_g=g_object.id,
+                        object_id_r=r_object.id,
+                        object_id_i=i_object.id,
+                        apply_catmask=self.apply_catmask,
+                        radec_map=self.radec_map)
+        return source

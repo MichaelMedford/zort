@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 """
 zort-initialize :
-Create an objects file and rcip map for all lightcurve files in a directory.
-These initialization files speed up quick reading for zort.
+Create an objects file, objects map and rcip map for all lightcurve files in
+the current directory. These initialization files are required for using zort.
 """
 
 import glob
@@ -17,10 +17,6 @@ from zort.initialize import generate_objects_file, generate_radec_map
 def main():
     # Get arguments
     parser = argparse.ArgumentParser(description=__doc__)
-    arguments = parser.add_argument_group('arguments')
-    arguments.add_argument('--lightcurve-file-directory', type=str,
-                           help='Directory containing lightcurve files.',
-                           required=True)
 
     parallelgroup = parser.add_mutually_exclusive_group()
     parallelgroup.add_argument('--single', dest='parallelFlag',
@@ -49,11 +45,11 @@ def main():
         rank = 0
         size = 1
 
-    lightcurve_files = glob.glob('%s/field*.txt' % args.lightcurve_file_directory)
+    lightcurve_files = glob.glob('field*.txt')
     lightcurve_files.sort()
 
     if rank == 0:
-        print('Generating object files and RCID maps '
+        print('Generating object files, object maps and rcid maps '
               'for %i lightcurve files' % len(lightcurve_files))
 
     my_lightcurve_files = np.array_split(lightcurve_files, size)[rank]
