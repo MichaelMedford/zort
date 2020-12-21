@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from zort.lightcurve import Lightcurve
 from zort.object import Object
+from zort.plot import plot_objects
 from zort.utils import return_filename, return_objects_map_filename, \
     return_radec_map_filename, filterid_dict
 
@@ -117,6 +118,19 @@ class Source:
         radec_map_filename = self.radec_map_filename
         radec_map = pickle.load(open(radec_map_filename, 'rb'))
         return radec_map
+
+    def plot_source(self, filename=None, insert_radius=30):
+        if filename is None:
+            object_ids = '_'.join([str(obj.objectid) for obj in self.objects
+                                   if obj is not None])
+            filename = '%s_%s.png' % (self.filename.replace('.txt', ''),
+                                      object_ids)
+
+        plot_objects(filename=filename,
+                     object_g=self.object_g,
+                     object_r=self.object_r,
+                     object_i=self.object_i,
+                     insert_radius=insert_radius)
 
 
 def create_source_from_object(object, locate_siblings=True, radius_as=2, skip_filterids=None):
