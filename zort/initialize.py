@@ -10,6 +10,7 @@ import pickle
 from collections import defaultdict
 import numpy as np
 from scipy.spatial import cKDTree
+from zort.radec import lightcurve_file_is_pole
 
 
 def generate_objects_file(lightcurve_file):
@@ -88,6 +89,8 @@ def generate_radec_map(lightcurve_file):
     ra_arr, dec_arr, object_id_arr = [], [], []
     radec_map = defaultdict(dict)
 
+    is_pole = lightcurve_file_is_pole(lightcurve_file)
+
     for line in f_in:
         data = line.replace('\n', '').split(',')
 
@@ -112,6 +115,9 @@ def generate_radec_map(lightcurve_file):
             ra_arr, dec_arr, object_id_arr = [], [], []
 
         ra, dec = float(data[5]), float(data[6])
+        if is_pole and ra > 180:
+            ra -= 360
+
         ra_arr.append(ra)
         dec_arr.append(dec)
         object_id_arr.append(object_id)
