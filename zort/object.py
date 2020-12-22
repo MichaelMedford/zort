@@ -187,7 +187,7 @@ class Object:
             query_ra, query_dec = self.ra, self.dec
             if is_pole and query_ra > 180:
                 query_ra -= 360
-            idx = kdtree.query_ball_point((self.ra, self.dec), radius_deg)
+            idx = kdtree.query_ball_point((query_ra, query_dec), radius_deg)
             if len(idx) == 0:
                 continue
             sibling_object_id = int(object_id_arr[idx[0]])
