@@ -139,6 +139,7 @@ class LightcurveFile:
         return Object(self.filename,
                       object_id=object_id,
                       objects_map=self.objects_map,
+                      radec_map=self.radec_map,
                       apply_catmask=self.apply_catmask)
 
     def return_objects_file(self):

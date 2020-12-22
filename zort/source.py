@@ -7,7 +7,6 @@ containing a single color lightcurve of a ZTF object.
 import os
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
 from zort.lightcurve import Lightcurve
 from zort.object import Object
 from zort.plot import plot_objects
@@ -30,6 +29,9 @@ class Source:
 
     def __init__(self, filename, object_id_g=None,
                  object_id_r=None, object_id_i=None,
+                 lightcurve_position_g=None,
+                 lightcurve_position_r=None,
+                 lightcurve_position_i=None,
                  apply_catmask=False, PS_g_minus_r=0,
                  objects_map=None,
                  radec_map=None):
@@ -38,20 +40,26 @@ class Source:
         self.objects_map_filename = return_objects_map_filename(filename)
         self.radec_map_filename = return_radec_map_filename(filename)
 
-        self._check_object_ids(object_id_g, object_id_r, object_id_i)
+        self._check_initialization(object_id_g, object_id_r, object_id_i,
+                                   lightcurve_position_g,
+                                   lightcurve_position_r,
+                                   lightcurve_position_i)
 
         self.apply_catmask = apply_catmask
         self.PS_g_minus_r = PS_g_minus_r
         if objects_map:
             self.objects_map = objects_map
         else:
-            self.objects_map = self.load_objects_map()
+            self.objects_map = None
         if radec_map:
             self.radec_map = radec_map
         else:
             self.radec_map = None
 
-        objects = self._load_objects(object_id_g, object_id_r, object_id_i)
+        objects = self._load_objects(object_id_g, object_id_r, object_id_i,
+                                     lightcurve_position_g,
+                                     lightcurve_position_r,
+                                     lightcurve_position_i)
         self.objects = objects
         self.object_g = objects[0]
         self.object_r = objects[1]
@@ -70,27 +78,55 @@ class Source:
 
     def __repr__(self):
         title = 'Filename: %s\n' % self.filename.split('/')[-1]
-        title += 'Object ID g: {id} | nepochs: {nepochs}\n'.format(
+        title += 'Object-g ID: {id} | nepochs: {nepochs}\n'.format(
             **self._return_object_print_info(self.object_g))
-        title += 'Object ID r: {id} | nepochs: {nepochs}\n'.format(
+        title += 'Object-r ID: {id} | nepochs: {nepochs}\n'.format(
             **self._return_object_print_info(self.object_r))
-        title += 'Object ID i: {id} | nepochs: {nepochs}\n'.format(
+        title += 'Object-i ID: {id} | nepochs: {nepochs}\n'.format(
             **self._return_object_print_info(self.object_i))
         title += 'Ra/Dec: (%.5f, %.5f)\n' % (self.ra, self.dec)
 
         return title
 
-    def _check_object_ids(self, object_id_g, object_id_r, object_id_i):
-        if object_id_g is None \
-                and object_id_r is None \
-                and object_id_i is None:
+    def _check_initialization(self,
+                              object_id_g, object_id_r, object_id_i,
+                              lightcurve_position_g,
+                              lightcurve_position_r,
+                              lightcurve_position_i):
+        arr = np.array([object_id_g, object_id_r, object_id_i,
+                        lightcurve_position_g, lightcurve_position_r,
+                        lightcurve_position_i])
+        if np.all(arr == None):
             raise Exception('Source must be instantiated '
-                            'with at least one object id.')
+                            'with at least one Object ID '
+                            'or lightcurve position.')
 
-    def _load_object(self, object_id, color):
-        if object_id is None:
+        if object_id_g and lightcurve_position_g:
+            raise Exception('Only initialize g object with Object ID '
+                            'or lightcurve position, but not both.')
+
+        if object_id_r and lightcurve_position_r:
+            raise Exception('Only initialize r object with Object ID '
+                            'or lightcurve position, but not both.')
+
+        if object_id_i and lightcurve_position_i:
+            raise Exception('Only initialize i object with Object ID '
+                            'or lightcurve position, but not both.')
+
+    def _load_object(self, object_id, lightcurve_position, color):
+        if object_id is None and lightcurve_position is None:
             return None
-        obj = Object(self.filename, object_id, objects_map=self.objects_map)
+
+        if lightcurve_position:
+            obj = Object(self.filename,
+                         lightcurve_position=lightcurve_position,
+                         objects_map=self.objects_map)
+        else:
+            if self.objects_map is None:
+                self.objects_map = self.load_objects_map()
+            obj = Object(self.filename,
+                         object_id=object_id,
+                         objects_map=self.objects_map)
         if obj.color != color:
             str = "Color of 'object_id_{color}' is {color_obj}. " \
                   "Must be {color}.".format(color=color,
@@ -98,10 +134,17 @@ class Source:
             raise Exception(str)
         return obj
 
-    def _load_objects(self, object_id_g, object_id_r, object_id_i):
-        object_g = self._load_object(object_id_g, 'g')
-        object_r = self._load_object(object_id_r, 'r')
-        object_i = self._load_object(object_id_i, 'i')
+    def _load_objects(self, object_id_g, object_id_r, object_id_i,
+                      lightcurve_position_g, lightcurve_position_r, lightcurve_position_i):
+        object_g = self._load_object(object_id=object_id_g,
+                                     lightcurve_position=lightcurve_position_g,
+                                     color='g')
+        object_r = self._load_object(object_id=object_id_r,
+                                     lightcurve_position=lightcurve_position_r,
+                                     color='r')
+        object_i = self._load_object(object_id=object_id_i,
+                                     lightcurve_position=lightcurve_position_i,
+                                     color='i')
         return object_g, object_r, object_i
 
     def _calculate_radec(self):

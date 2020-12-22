@@ -10,7 +10,6 @@ locate_siblings function.
 import os
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
 from zort.lightcurve import Lightcurve
 from zort.utils import return_filename, return_objects_filename, \
     return_objects_map_filename, return_radec_map_filename, \
@@ -33,9 +32,15 @@ class Object:
     coincident objects with the locate_siblings function.
     """
 
-    def __init__(self, filename, object_id=None,
+    def __init__(self, filename, object_id=None, lightcurve_position=None,
                  apply_catmask=False, PS_g_minus_r=0,
                  objects_map=None, radec_map=None):
+        # Check object_id and lightcurve_position
+        if object_id is None and lightcurve_position is None:
+            raise Exception('ObjectID or lightcurve_position must be defined.')
+        elif object_id and lightcurve_position:
+            raise Exception('Only initialize object with Object ID '
+                            'or lightcurve position, but not both.')
 
         # Load filenames and check for existence
         self.filename = return_filename(filename)
@@ -43,11 +48,15 @@ class Object:
         self.objects_map_filename = return_objects_map_filename(filename)
         self.radec_map_filename = return_radec_map_filename(filename)
 
-        if objects_map:
-            self.objects_map = objects_map
-        else:
-            self.objects_map = self.load_objects_map()
-        self.lightcurve_position = self.objects_map[object_id]
+        self.objects_map = None
+        if object_id:
+            if objects_map:
+                self.objects_map = objects_map
+            else:
+                self.objects_map = self.load_objects_map()
+            self.lightcurve_position = self.objects_map[object_id]
+        elif lightcurve_position:
+            self.lightcurve_position = lightcurve_position
 
         params = self._load_params()
         self.object_id = params['object_id']
@@ -130,7 +139,9 @@ class Object:
         # Assign the sibling to its own object instance
         siblings = []
         for object_id in sibling_object_ids:
-            sib = Object(self.filename, object_id)
+            sib = Object(self.filename, object_id,
+                         objects_map=self.objects_map,
+                         radec_map=self.radec_map)
             siblings.append(sib)
             if printFlag:
                 print('---- Sibling found at %.5f, %.5f !' % (
@@ -183,7 +194,6 @@ class Object:
                 siblings_object_ids.append(sibling_object_id)
 
         self.set_siblings(siblings_object_ids, printFlag)
-
 
     def plot_lightcurve(self, filename=None, insert_radius=30):
         if filename is None:
