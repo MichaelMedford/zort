@@ -60,10 +60,10 @@ class Source:
                                      lightcurve_position_g,
                                      lightcurve_position_r,
                                      lightcurve_position_i)
-        self.objects = objects
         self.object_g = objects[0]
         self.object_r = objects[1]
         self.object_i = objects[2]
+        self.objects = [o for o in objects if o is not None]
 
         radec = self._calculate_radec()
         self.ra = radec[0]
