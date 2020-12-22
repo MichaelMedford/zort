@@ -33,9 +33,10 @@ class Object:
     coincident objects with the locate_siblings function.
     """
 
-    def __init__(self, filename, objectid,
+    def __init__(self, filename, object_id=None,
                  apply_catmask=False, PS_g_minus_r=0,
                  objects_map=None, radec_map=None):
+
         # Load filenames and check for existence
         self.filename = return_filename(filename)
         self.objects_filename = return_objects_filename(filename)
@@ -46,10 +47,10 @@ class Object:
             self.objects_map = objects_map
         else:
             self.objects_map = self.load_objects_map()
-        self.lightcurve_position = self.objects_map[objectid]
+        self.lightcurve_position = self.objects_map[object_id]
 
         params = self._load_params()
-        self.objectid = params['objectid']
+        self.object_id = params['object_id']
         self.nepochs = params['nepochs']
         self.filterid = params['filterid']
         self.fieldid = params['fieldid']
@@ -70,7 +71,7 @@ class Object:
 
     def __repr__(self):
         title = 'Filename: %s\n' % self.filename.split('/')[-1]
-        title += 'Object ID: %i\n' % self.objectid
+        title += 'Object ID: %i\n' % self.object_id
         title += 'Filter ID: %i | Color: %s\n' % (self.filterid, self.color)
         title += 'Ra/Dec: (%.5f, %.5f)\n' % (self.ra, self.dec)
         if self.apply_catmask:
@@ -93,7 +94,7 @@ class Object:
         params = line.split()[1:]
 
         params_dict = dict()
-        params_dict['objectid'] = int(params[0])
+        params_dict['object_id'] = int(params[0])
         params_dict['nepochs'] = int(params[1])
         params_dict['filterid'] = int(params[2])
         params_dict['fieldid'] = int(params[3])
@@ -143,7 +144,7 @@ class Object:
                         skip_filterids=None, printFlag=False):
         radius_deg = radius_as / 3600.
         if printFlag:
-            print('Locating siblings for ZTF Object %i' % self.objectid)
+            print('Locating siblings for ZTF Object %i' % self.object_id)
             print('-- Object location: %.5f, %.5f ...' % (self.ra, self.dec))
 
         if self.radec_map is None:
@@ -187,7 +188,7 @@ class Object:
     def plot_lightcurve(self, filename=None, insert_radius=30):
         if filename is None:
             filename = '%s_%i_lc.png' % (self.filename.replace('.txt', ''),
-                                         self.objectid)
+                                         self.object_id)
 
         plot_object(filename=filename, object=self,
                     insert_radius=insert_radius)
@@ -198,7 +199,7 @@ class Object:
 
         if filename is None:
             filename = '%s_%s_lc_with_siblings.png' % (
-                self.filename.replace('.txt', ''), self.objectid)
+                self.filename.replace('.txt', ''), self.object_id)
 
         source_dict = {'g': None, 'r': None, 'i': None,
                        self.color: self}

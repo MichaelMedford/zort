@@ -21,7 +21,7 @@ def generate_objects_file(lightcurve_file):
     f_in = open(lightcurve_file, 'r')
     object_map = {}
     object_keys = ['id', 'nepochs', 'filterid',
-                   'fieldid', 'rcid', 'ra', 'dec', 'lightcurve_position']
+                   'fieldid', 'rcid', 'ra', 'dec']
     with open(objects_file, 'w') as f_out:
         f_out.write('%s\n' % ','.join(object_keys))
 
@@ -38,11 +38,10 @@ def generate_objects_file(lightcurve_file):
 
             data = line.replace('\n', '').split()[1:]
             data_str = ','.join(data)
-
-            lightcurve_position = f_in.tell() - len(line)
-            f_out.write('%s,%i\n' % (data_str, lightcurve_position))
+            f_out.write('%s\n' % data_str)
 
             object_id = int(data_str.split(',')[0])
+            lightcurve_position = f_in.tell() - len(line)
             object_map[object_id] = lightcurve_position
 
     f_in.close()

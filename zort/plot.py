@@ -20,7 +20,7 @@ def _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius):
     ax[0].set_xlim(hmjd_min, hmjd_max)
     ax[0].set_ylabel('Magnitude')
     ax[0].set_xlabel('Observation Date')
-    ax[0].set_title('ZTF Object %i (%s band)' % (object.objectid,
+    ax[0].set_title('ZTF Object %i (%s band)' % (object.object_id,
                                                  object.color))
 
     hmjd0 = object.lightcurve.hmjd[np.argmin(object.lightcurve.mag)]

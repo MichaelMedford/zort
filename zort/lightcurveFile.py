@@ -79,15 +79,17 @@ class LightcurveFile:
     save_objects('objects.%i.list' % rank, interesting_objects)
     """
 
-    def __init__(self, filename, init_object_position=60,
+    def __init__(self, filename, init_object_position=40,
                  proc_rank=0, proc_size=1, apply_catmask=True):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
         self.objects_filename = return_objects_filename(filename)
+        self.objects_map_filename = return_objects_map_filename(filename)
         self.radec_map_filename = return_radec_map_filename(filename)
 
         self.init_object_position = init_object_position
         self.objects_file = self.return_objects_file()
+        self.objects_map = self.load_objects_map()
         self.radec_map = self.load_radec_map()
         self.proc_rank = proc_rank
         self.proc_size = proc_size
@@ -133,14 +135,20 @@ class LightcurveFile:
         return filename
 
     def return_object(self, line):
-        lightcurve_position = self._return_parsed_line(line)[-1]
-        return Object(self.filename, lightcurve_position,
+        object_id = int(self._return_parsed_line(line)[0])
+        return Object(self.filename,
+                      object_id=object_id,
+                      objects_map=self.objects_map,
                       apply_catmask=self.apply_catmask)
 
     def return_objects_file(self):
         file = open(self.objects_filename, 'r')
         file.seek(self.init_object_position)
         return file
+
+    def load_objects_map(self):
+        objects_map = pickle.load(open(self.objects_map_filename, 'rb'))
+        return objects_map
 
     def load_radec_map(self):
         radec_map = pickle.load(open(self.radec_map_filename, 'rb'))

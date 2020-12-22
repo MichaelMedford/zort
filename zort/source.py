@@ -63,10 +63,10 @@ class Source:
 
     def _return_object_print_info(self, object):
         if object is None:
-            objectid, nepochs = None, None
+            object_id, nepochs = None, None
         else:
-            objectid, nepochs = object.objectid, object.nepochs
-        return {'id': objectid, 'nepochs': nepochs}
+            object_id, nepochs = object.object_id, object.nepochs
+        return {'id': object_id, 'nepochs': nepochs}
 
     def __repr__(self):
         title = 'Filename: %s\n' % self.filename.split('/')[-1]
@@ -119,9 +119,9 @@ class Source:
         radec_map = pickle.load(open(radec_map_filename, 'rb'))
         return radec_map
 
-    def plot_source(self, filename=None, insert_radius=30):
+    def plot_lightcurves(self, filename=None, insert_radius=30):
         if filename is None:
-            object_ids = '_'.join([str(obj.objectid) for obj in self.objects
+            object_ids = '_'.join([str(obj.object_id) for obj in self.objects
                                    if obj is not None])
             filename = '%s_%s.png' % (self.filename.replace('.txt', ''),
                                       object_ids)
@@ -138,9 +138,9 @@ def create_source_from_object(object, locate_siblings=True, radius_as=2, skip_fi
         object.locate_siblings(radius_as=radius_as,
                                skip_filterids=skip_filterids)
     source_dict = {'g': None, 'r': None, 'i': None,
-                   object.color: object.objectid}
+                   object.color: object.object_id}
     for sibling in object.siblings:
-        source_dict[sibling.color] = sibling.objectid
+        source_dict[sibling.color] = sibling.object_id
 
     return Source(filename=object.filename,
                   object_id_g=source_dict['g'],
