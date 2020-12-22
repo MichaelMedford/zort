@@ -10,10 +10,11 @@ locate_siblings function.
 import os
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
 from zort.lightcurve import Lightcurve
 from zort.utils import return_filename, return_objects_filename, \
-    return_rcid_map_filename, filterid_dict
+    return_objects_map_filename, return_radec_map_filename, \
+    filterid_dict
+from zort.plot import plot_object, plot_objects
 
 
 ################################
@@ -31,16 +32,34 @@ class Object:
     coincident objects with the locate_siblings function.
     """
 
-    def __init__(self, filename, lightcurve_position,
-                 apply_catmask=False, PS_g_minus_r=0, rcid_map=None):
+    def __init__(self, filename, object_id=None, lightcurve_position=None,
+                 apply_catmask=False, PS_g_minus_r=0,
+                 objects_map=None, radec_map=None):
+        # Check object_id and lightcurve_position
+        if object_id is None and lightcurve_position is None:
+            raise Exception('ObjectID or lightcurve_position must be defined.')
+        elif object_id and lightcurve_position:
+            raise Exception('Only initialize object with Object ID '
+                            'or lightcurve position, but not both.')
+
         # Load filenames and check for existence
         self.filename = return_filename(filename)
         self.objects_filename = return_objects_filename(filename)
-        self.rcid_map_filename = return_rcid_map_filename(filename)
+        self.objects_map_filename = return_objects_map_filename(filename)
+        self.radec_map_filename = return_radec_map_filename(filename)
 
-        self.lightcurve_position = int(lightcurve_position)
+        self.objects_map = None
+        if object_id:
+            if objects_map:
+                self.objects_map = objects_map
+            else:
+                self.objects_map = self.load_objects_map()
+            self.lightcurve_position = self.objects_map[object_id]
+        elif lightcurve_position:
+            self.lightcurve_position = lightcurve_position
+
         params = self._load_params()
-        self.objectid = params['objectid']
+        self.object_id = params['object_id']
         self.nepochs = params['nepochs']
         self.filterid = params['filterid']
         self.fieldid = params['fieldid']
@@ -51,23 +70,25 @@ class Object:
         self.apply_catmask = apply_catmask
         self.PS_g_minus_r = PS_g_minus_r
         self.lightcurve = self._load_lightcurve()
-        self.siblings = []
-        if rcid_map:
-            self.rcid_map = rcid_map
+        self.siblings = None
+        self.nsiblings = 0
+
+        if radec_map:
+            self.radec_map = radec_map
         else:
-            self.rcid_map = None
+            self.radec_map = None
 
     def __repr__(self):
         title = 'Filename: %s\n' % self.filename.split('/')[-1]
-        title += 'Lightcurve Buffer Position: %i\n' % self.lightcurve_position
-        title += 'Object ID: %i\n' % self.objectid
+        title += 'Object ID: %i\n' % self.object_id
         title += 'Filter ID: %i | Color: %s\n' % (self.filterid, self.color)
         title += 'Ra/Dec: (%.5f, %.5f)\n' % (self.ra, self.dec)
         if self.apply_catmask:
             title += '%i Epochs passing catmask\n' % self.lightcurve.nepochs
         else:
             title += '%i Epochs without applying catmask\n' % self.lightcurve.nepochs
-        title += '%i siblings identified\n' % len(self.siblings)
+        title += '%i siblings identified\n' % self.nsiblings
+        title += 'Lightcurve Buffer Position: %i\n' % self.lightcurve_position
 
         return title
 
@@ -82,7 +103,7 @@ class Object:
         params = line.split()[1:]
 
         params_dict = dict()
-        params_dict['objectid'] = int(params[0])
+        params_dict['object_id'] = int(params[0])
         params_dict['nepochs'] = int(params[1])
         params_dict['filterid'] = int(params[2])
         params_dict['fieldid'] = int(params[3])
@@ -95,10 +116,15 @@ class Object:
         # Defined by ZTF convention
         return filterid_dict[self.filterid]
 
-    def load_rcid_map(self):
-        rcid_map_filename = self.rcid_map_filename
-        rcid_map = pickle.load(open(rcid_map_filename, 'rb'))
-        return rcid_map
+    def load_objects_map(self):
+        objects_map_filename = self.objects_map_filename
+        objects_map = pickle.load(open(objects_map_filename, 'rb'))
+        return objects_map
+
+    def load_radec_map(self):
+        radec_map_filename = self.radec_map_filename
+        radec_map = pickle.load(open(radec_map_filename, 'rb'))
+        return radec_map
 
     def return_siblings_filename(self):
         siblings_filename = self.filename.replace('.txt', '.siblings')
@@ -109,202 +135,92 @@ class Object:
                           apply_catmask=self.apply_catmask,
                           PS_g_minus_r=self.PS_g_minus_r)
 
-    def set_sibling(self, sibling_lightcurve_position, printFlag=False):
+    def set_siblings(self, sibling_object_ids, printFlag=False):
         # Assign the sibling to its own object instance
-        sibling = Object(self.filename, sibling_lightcurve_position)
-        self.siblings.append(sibling)
-
-        if printFlag:
-            print('---- Sibling found at %.5f, %.5f !' % (
-                sibling.ra, sibling.dec))
-            print('---- Original Color: %s | Sibling Color: %s' % (
-                self.color, sibling.color))
+        siblings = []
+        for object_id in sibling_object_ids:
+            sib = Object(self.filename, object_id,
+                         objects_map=self.objects_map,
+                         radec_map=self.radec_map)
+            siblings.append(sib)
+            if printFlag:
+                print('---- Sibling found at %.5f, %.5f !' % (
+                    sib.ra, sib.dec))
+                print('---- Original Color: %s | Sibling Color: %s' % (
+                    self.color, sib.color))
+        self.siblings = siblings
+        self.nsiblings = len(siblings)
 
     def locate_siblings(self, radius_as=2,
                         skip_filterids=None, printFlag=False):
         radius_deg = radius_as / 3600.
         if printFlag:
-            print('Locating siblings for ZTF Object %i' % self.objectid)
+            print('Locating siblings for ZTF Object %i' % self.object_id)
             print('-- Object location: %.5f, %.5f ...' % (self.ra, self.dec))
 
-        if self.rcid_map is None:
-            self.rcid_map = self.load_rcid_map()
+        if self.radec_map is None:
+            self.radec_map = self.load_radec_map()
 
         # Searching for siblings in the opposite
-        # filtered sections of the rcid_map
+        # filtered sections of the radec_map
         sibling_filterids = [i for i in [1, 2, 3] if i != self.filterid]
         if skip_filterids:
             sibling_filterids = [i for i in sibling_filterids
                                  if i not in skip_filterids]
         rcid = self.rcid
+        siblings_object_ids = []
 
         for filterid in sibling_filterids:
             color = filterid_dict[filterid]
-            if filterid not in self.rcid_map:
+            if filterid not in self.radec_map:
                 if printFlag:
-                    print('-- rcid_map does not contain filter %s' % color)
+                    print('-- radec_map does not contain filter %s' % color)
                 continue
-            elif rcid not in self.rcid_map[filterid]:
+            elif rcid not in self.radec_map[filterid]:
                 if printFlag:
-                    print('-- rcid_map %s does not have rcid %i' % (color, rcid))
+                    print('-- radec_map %s does not have rcid %i' % (color, rcid))
                 continue
 
-            kdtree, lightcurve_position_arr = self.rcid_map[filterid][rcid]
+            kdtree, object_id_arr = self.radec_map[filterid][rcid]
             idx = kdtree.query_ball_point((self.ra, self.dec), radius_deg)
             if len(idx) == 0:
                 continue
-            siblings_lightcurve_position = int(lightcurve_position_arr[idx[0]])
+            sibling_object_id = int(object_id_arr[idx[0]])
 
-            if siblings_lightcurve_position is None:
+            if sibling_object_id is None:
                 if printFlag:
                     print('---- No siblings found for filter %i' % filterid)
             else:
-                self.set_sibling(siblings_lightcurve_position, printFlag)
+                siblings_object_ids.append(sibling_object_id)
+
+        self.set_siblings(siblings_object_ids, printFlag)
 
     def plot_lightcurve(self, filename=None, insert_radius=30):
-        hmjd_min = np.min(self.lightcurve.hmjd) - 10
-        hmjd_max = np.max(self.lightcurve.hmjd) + 10
-
-        if self.color == 'i':
-            color = 'k'
-        else:
-            color = self.color
-
-        fig, ax = plt.subplots(1, 2, figsize=(12, 4))
-        fig.subplots_adjust(hspace=0.4)
-
-        ax[0].errorbar(self.lightcurve.hmjd, self.lightcurve.mag,
-                       yerr=self.lightcurve.magerr,
-                       ls='none', marker='.', color=color)
-        ax[0].invert_yaxis()
-        ax[0].set_xlim(hmjd_min, hmjd_max)
-        ax[0].set_ylabel('Magnitude')
-        ax[0].set_xlabel('Observation Date')
-        ax[0].set_title('ZTF Object %i (%s band)' % (self.objectid,
-                                                     self.color))
-
-        hmjd0 = self.lightcurve.hmjd[np.argmin(self.lightcurve.mag)]
-        hmjd_min_insert = hmjd0 - insert_radius
-        hmjd_max_insert = hmjd0 + insert_radius
-        hmjd_cond = (self.lightcurve.hmjd >= hmjd_min_insert) & (
-                self.lightcurve.hmjd <= hmjd_max_insert)
-
-        ax[1].errorbar(self.lightcurve.hmjd[hmjd_cond],
-                       self.lightcurve.mag[hmjd_cond],
-                       yerr=self.lightcurve.magerr[hmjd_cond],
-                       ls='none', marker='.', color=color)
-        ax[1].invert_yaxis()
-        ax[1].set_xlim(hmjd_min_insert, hmjd_max_insert)
-        ax[1].set_ylabel('Magnitude')
-        ax[1].set_xlabel('Observation Date')
-        ax[1].set_title('%i Days Around Peak' % insert_radius)
-
         if filename is None:
-            filename = '%s-%i-lc.png' % (self.filename, self.lightcurve_position)
-        fig.savefig(filename, dpi=300, bbox_inches='tight', pad_inches=0.05)
-        print('---- Lightcurve saved: %s' % filename)
+            filename = '%s_%i_lc.png' % (self.filename.replace('.txt', ''),
+                                         self.object_id)
 
-        plt.close(fig)
-        return filename
+        plot_object(filename=filename, object=self,
+                    insert_radius=insert_radius)
 
     def plot_lightcurves(self, filename=None, insert_radius=30):
-        hmjd_min = np.min(self.lightcurve.hmjd) - 10
-        hmjd_max = np.max(self.lightcurve.hmjd) + 10
-
         if self.siblings is None:
             self.locate_siblings()
 
-        if len(self.siblings) == 0:
-            self.plot_lightcurve(filename=filename,
-                                 insert_radius=insert_radius)
-            return
-        elif len(self.siblings) == 1:
-            N_rows = 2
-            figsize_height = 6
-        else:
-            N_rows = 3
-            figsize_height = 9
-
-        if self.color == 'i':
-            color = 'k'
-        else:
-            color = self.color
-
-        fig, ax = plt.subplots(N_rows, 2, figsize=(12, figsize_height))
-        fig.subplots_adjust(top=0.92)
-        fig.subplots_adjust(hspace=0.4)
-
-        ax[0][0].errorbar(self.lightcurve.hmjd, self.lightcurve.mag,
-                          yerr=self.lightcurve.magerr,
-                          ls='none', marker='.', color=color)
-        ax[0][0].invert_yaxis()
-        ax[0][0].set_xlim(hmjd_min, hmjd_max)
-        ax[0][0].set_ylabel('Magnitude')
-        ax[0][0].set_xlabel('Observation Date')
-        ax[0][0].set_title('ZTF Object %i (%s band)' % (self.objectid,
-                                                        self.color))
-
-        hmjd0 = self.lightcurve.hmjd[np.argmin(self.lightcurve.mag)]
-        hmjd_min_insert = hmjd0 - insert_radius
-        hmjd_max_insert = hmjd0 + insert_radius
-        hmjd_cond = (self.lightcurve.hmjd >= hmjd_min_insert) & (
-                self.lightcurve.hmjd <= hmjd_max_insert)
-
-        ax[0][1].errorbar(self.lightcurve.hmjd[hmjd_cond],
-                          self.lightcurve.mag[hmjd_cond],
-                          yerr=self.lightcurve.magerr[hmjd_cond],
-                          ls='none', marker='.', color=color)
-        ax[0][1].invert_yaxis()
-        ax[0][1].set_xlim(hmjd_min_insert, hmjd_max_insert)
-        ax[0][1].set_ylabel('Magnitude')
-        ax[0][1].set_xlabel('Observation Date')
-        ax[0][1].set_title('%i Days Around Peak' % insert_radius)
-
-        for i, sibling in enumerate(self.siblings, 1):
-            sibling._load_params()
-            sibling._load_lightcurve()
-            if sibling.color == 'i':
-                color = 'k'
-            else:
-                color = sibling.color
-
-            ax[i][0].errorbar(sibling.lightcurve.hmjd,
-                              sibling.lightcurve.mag,
-                              yerr=sibling.lightcurve.magerr,
-                              ls='none',
-                              marker='.',
-                              color=color)
-            ax[i][0].invert_yaxis()
-            ax[i][0].set_xlim(hmjd_min, hmjd_max)
-            ax[i][0].set_ylabel('Magnitude')
-            ax[i][0].set_xlabel('Observation Date')
-            ax[i][0].set_title('ZTF Object %i '
-                               '(%s band)' % (sibling.objectid,
-                                              sibling.color))
-
-            hmjd_cond = (sibling.lightcurve.hmjd >= hmjd_min_insert) & \
-                        (sibling.lightcurve.hmjd <= hmjd_max_insert)
-
-            ax[i][1].errorbar(sibling.lightcurve.hmjd[hmjd_cond],
-                              sibling.lightcurve.mag[hmjd_cond],
-                              yerr=sibling.lightcurve.magerr[hmjd_cond],
-                              ls='none',
-                              marker='.',
-                              color=color)
-            ax[i][1].invert_yaxis()
-            ax[i][1].set_xlim(hmjd_min_insert, hmjd_max_insert)
-            ax[i][1].set_ylabel('Magnitude')
-            ax[i][1].set_xlabel('Observation Date')
-            ax[i][1].set_title('%i Days Around Peak' % insert_radius)
-
         if filename is None:
-            filename = '%s-%i-lc-with_siblings.png' % (
-                self.filename, self.lightcurve_position)
-        fig.savefig(filename, dpi=300, bbox_inches='tight', pad_inches=0.05)
-        print('---- Lightcurves saved: %s' % filename)
+            filename = '%s_%s_lc_with_siblings.png' % (
+                self.filename.replace('.txt', ''), self.object_id)
 
-        plt.close(fig)
-        return filename
+        source_dict = {'g': None, 'r': None, 'i': None,
+                       self.color: self}
+        for sibling in self.siblings:
+            source_dict[sibling.color] = sibling
+
+        plot_objects(filename=filename,
+                     object_g=source_dict['g'],
+                     object_r=source_dict['r'],
+                     object_i=source_dict['i'],
+                     insert_radius=insert_radius)
 
 
 def save_objects(filename, objects, overwrite=False):

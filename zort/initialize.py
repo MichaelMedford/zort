@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 """
 initialize.py
-Initialization of object and rcip_map files.
+Initialization of object, object_map and radec_map files.
 """
 
 
@@ -19,9 +19,9 @@ def generate_objects_file(lightcurve_file):
         return
 
     f_in = open(lightcurve_file, 'r')
-
+    object_map = {}
     object_keys = ['id', 'nepochs', 'filterid',
-                   'fieldid', 'rcid', 'ra', 'dec', 'lightcurve_position']
+                   'fieldid', 'rcid', 'ra', 'dec']
     with open(objects_file, 'w') as f_out:
         f_out.write('%s\n' % ','.join(object_keys))
 
@@ -38,38 +38,44 @@ def generate_objects_file(lightcurve_file):
 
             data = line.replace('\n', '').split()[1:]
             data_str = ','.join(data)
+            f_out.write('%s\n' % data_str)
 
+            object_id = int(data_str.split(',')[0])
             lightcurve_position = f_in.tell() - len(line)
-            f_out.write('%s,%i\n' % (data_str, lightcurve_position))
+            object_map[object_id] = lightcurve_position
 
     f_in.close()
 
-
-def save_rcid_map(DR1_object_file, rcid_map):
-    rcid_map_filename = DR1_object_file.replace('.objects', '.rcid_map')
-    with open(rcid_map_filename, 'wb') as fileObj:
-        pickle.dump(rcid_map, fileObj)
+    objects_file = lightcurve_file.replace('.txt', '.objects_map')
+    with open(objects_file, 'wb') as fileObj:
+        pickle.dump(object_map, fileObj)
 
 
-def return_rcid_map_size(rcid_map):
-    rcid_map_size = 0
-    for _, v in rcid_map.items():
-        rcid_map_size += len(v)
-    return rcid_map_size
+def save_radec_map(DR1_object_file, radec_map):
+    radec_map_filename = DR1_object_file.replace('.objects', '.radec_map')
+    with open(radec_map_filename, 'wb') as fileObj:
+        pickle.dump(radec_map, fileObj)
 
 
-def return_rcid_map_filesize(rcid_map):
-    rcid_map_filesize = 0
-    for k, _ in rcid_map.items():
-        for _, t in rcid_map[k].items():
-            rcid_map_filesize += t[1] - t[0]
-    return rcid_map_filesize
+def return_radec_map_size(radec_map):
+    radec_map_size = 0
+    for _, v in radec_map.items():
+        radec_map_size += len(v)
+    return radec_map_size
 
 
-def generate_rcid_map(lightcurve_file):
-    rcid_map_file = lightcurve_file.replace('.txt', '.rcid_map')
-    if os.path.exists(rcid_map_file):
-        print('%s already exists. Skipping.' % rcid_map_file)
+def return_radec_map_filesize(radec_map):
+    radec_map_filesize = 0
+    for k, _ in radec_map.items():
+        for _, t in radec_map[k].items():
+            radec_map_filesize += t[1] - t[0]
+    return radec_map_filesize
+
+
+def generate_radec_map(lightcurve_file):
+    radec_map_file = lightcurve_file.replace('.txt', '.radec_map')
+    if os.path.exists(radec_map_file):
+        print('%s already exists. Skipping.' % radec_map_file)
         return
 
     objects_file = lightcurve_file.replace('.txt', '.objects')
@@ -79,12 +85,13 @@ def generate_rcid_map(lightcurve_file):
 
     rcid, rcid_current = None, None
     filterid, filterid_current = None, None
-    ra_arr, dec_arr, lightcurve_position_arr = [], [], []
-    rcid_map = defaultdict(dict)
+    ra_arr, dec_arr, object_id_arr = [], [], []
+    radec_map = defaultdict(dict)
 
     for line in f_in:
         data = line.replace('\n', '').split(',')
 
+        object_id = int(data[0])
         rcid = int(data[4])
         filterid = int(data[2])
 
@@ -97,24 +104,23 @@ def generate_rcid_map(lightcurve_file):
         if rcid != rcid_current:
             objects = np.array([ra_arr, dec_arr]).T
             kdtree = cKDTree(objects)
-            rcid_map[filterid_current][rcid_current] = \
-                (kdtree, lightcurve_position_arr)
+            radec_map[filterid_current][rcid_current] = \
+                (kdtree, object_id_arr)
 
             rcid_current = rcid
             filterid_current = filterid
-            ra_arr, dec_arr, lightcurve_position_arr = [], [], []
+            ra_arr, dec_arr, object_id_arr = [], [], []
 
         ra, dec = float(data[5]), float(data[6])
-        lightcurve_position = int(data[-1])
         ra_arr.append(ra)
         dec_arr.append(dec)
-        lightcurve_position_arr.append(lightcurve_position)
+        object_id_arr.append(object_id)
 
     objects = np.array([ra_arr, dec_arr]).T
     kdtree = cKDTree(objects)
-    rcid_map[filterid_current][rcid_current] = \
-        (kdtree, lightcurve_position_arr)
+    radec_map[filterid_current][rcid_current] = \
+        (kdtree, object_id_arr)
 
     f_in.close()
 
-    save_rcid_map(rcid_map_file, rcid_map)
+    save_radec_map(radec_map_file, radec_map)

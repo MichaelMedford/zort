@@ -55,7 +55,7 @@ observations in a single color. Objects include IDs, sky locations (in right
 ascension and declination) and colors (g-band and R-band).
 - **lightcurve**: Observation epochs of an object. Lightcurve observations 
 include dates, magnitudes and magnitude errors.
-- **rcid map**: Binary search trees for the objects in a lightcurve file. 
+- **radec_map**: Binary search trees for the objects in a lightcurve file. 
 required for faster object access.
 - **siblings**: A spatially coincident object in a different color 
 originating from the same astrophysical source.
@@ -66,7 +66,7 @@ originating from the same astrophysical source.
 (```*.txt```) in order to make object discovery and multiple color 
 consolidation faster. Object files (```*.objects```) contain all of the 
 metadata for each object in a lightcurve file. RCID map files 
-(```*.rcid_map```) contain binary search trees that facilitates faster 
+(```*.radec_map```) contain binary search trees that facilitates faster 
 matching of multiple colors for individual objects. ```zort``` requires that 
 each lightcurve file has a corresponding object file and RCID map file.
 

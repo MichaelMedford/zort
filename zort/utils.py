@@ -25,28 +25,26 @@ def return_filename(filename):
 
 
 def return_objects_filename(filename):
-    objects_filename = filename.replace('.txt', '.objects')
-    if os.path.exists(objects_filename):
-        return objects_filename
+    return _return_util_filename(filename, 'objects')
+
+
+def return_objects_map_filename(filename):
+    return _return_util_filename(filename, 'objects_map')
+
+
+def return_radec_map_filename(filename):
+    return _return_util_filename(filename, 'radec_map')
+
+
+def _return_util_filename(filename, extension):
+    util_filename = filename.replace('txt', extension)
+    if os.path.exists(util_filename):
+        return util_filename
     else:
         print('******')
-        print('Objects file missing, must be generated using '
-              'zort-initialize to continue.')
+        print('%s file missing, must be generated using '
+              'zort-initialize to continue.' % extension)
         print("Run 'zort-initialize -h' or visit "
               "https://github.com/MichaelMedford/zort for more details.")
         print('******')
-        raise FileNotFoundError(objects_filename)
-
-
-def return_rcid_map_filename(filename):
-    rcid_map_filename = filename.replace('.txt', '.rcid_map')
-    if os.path.exists(rcid_map_filename):
-        return rcid_map_filename
-    else:
-        print('******')
-        print('RCID map file missing, must be generated using '
-              'zort-initialize to continue.')
-        print("Run 'zort-initialize -h' or visit "
-              "https://github.com/MichaelMedford/zort for more details.")
-        print('******')
-        raise FileNotFoundError(rcid_map_filename)
+        raise FileNotFoundError(util_filename)
