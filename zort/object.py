@@ -39,7 +39,7 @@ class Object:
         # Check object_id and lightcurve_position
         if object_id is None and lightcurve_position is None:
             raise Exception('ObjectID or lightcurve_position must be defined.')
-        elif object_id and lightcurve_position:
+        elif object_id is not None and lightcurve_position is not None:
             raise Exception('Only initialize object with Object ID '
                             'or lightcurve position, but not both.')
 
@@ -50,13 +50,13 @@ class Object:
         self.radec_map_filename = return_radec_map_filename(filename)
 
         self.objects_map = None
-        if object_id:
+        if object_id is not None:
             if objects_map:
                 self.objects_map = objects_map
             else:
                 self.objects_map = self.load_objects_map()
             self.lightcurve_position = self.objects_map[object_id]
-        elif lightcurve_position:
+        elif lightcurve_position is not None:
             self.lightcurve_position = lightcurve_position
 
         params = self._load_params()

@@ -101,15 +101,15 @@ class Source:
                             'with at least one Object ID '
                             'or lightcurve position.')
 
-        if object_id_g and lightcurve_position_g:
+        if object_id_g is not None and lightcurve_position_g is not None:
             raise Exception('Only initialize g object with Object ID '
                             'or lightcurve position, but not both.')
 
-        if object_id_r and lightcurve_position_r:
+        if object_id_r is not None and lightcurve_position_r is not None:
             raise Exception('Only initialize r object with Object ID '
                             'or lightcurve position, but not both.')
 
-        if object_id_i and lightcurve_position_i:
+        if object_id_i is not None and lightcurve_position_i is not None:
             raise Exception('Only initialize i object with Object ID '
                             'or lightcurve position, but not both.')
 
