@@ -117,7 +117,7 @@ class Source:
         if object_id is None and lightcurve_position is None:
             return None
 
-        if lightcurve_position:
+        if lightcurve_position is not None:
             obj = Object(self.filename,
                          lightcurve_position=lightcurve_position,
                          objects_map=self.objects_map)
