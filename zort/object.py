@@ -70,7 +70,7 @@ class Object:
         self.color = self._return_filterid_color()
         self.apply_catmask = apply_catmask
         self.PS_g_minus_r = PS_g_minus_r
-        self.lightcurve = self._load_lightcurve()
+        self._lightcurve = None
         self.siblings = None
         self.nsiblings = 0
 
@@ -130,6 +130,12 @@ class Object:
     def return_siblings_filename(self):
         siblings_filename = self.filename.replace('.txt', '.siblings')
         return siblings_filename
+
+    @property
+    def lightcurve(self):
+        if not self._lightcurve:
+            self._lightcurve = self._load_lightcurve()
+        return self._lightcurve
 
     def _load_lightcurve(self):
         return Lightcurve(self.filename, self.lightcurve_position,
