@@ -10,6 +10,9 @@ locate_siblings function.
 import os
 import pickle
 import numpy as np
+from astropy.coordinates import SkyCoord
+import astropy.units as u
+
 from zort.lightcurve import Lightcurve
 from zort.utils import return_filename, return_objects_filename, \
     return_objects_map_filename, return_radec_map_filename, \
@@ -73,6 +76,7 @@ class Object:
         self._lightcurve = None
         self.siblings = None
         self.nsiblings = 0
+        self._glonlat = None
 
         if radec_map:
             self.radec_map = radec_map
@@ -92,6 +96,24 @@ class Object:
         title += 'Lightcurve Buffer Position: %i\n' % self.lightcurve_position
 
         return title
+
+    @property
+    def glonlat(self):
+        if self._glonlat is None:
+            coord = SkyCoord(self.ra, self.dec, unit=u.degree, frame='icrs')
+            glon, glat = coord.galactic.l.value, coord.galactic.b.value
+            if glon > 180:
+                glon -= 360
+            self._glonlat = (glon, glat)
+        return self._glonlat
+
+    @property
+    def glon(self):
+        return self.glonlat[0]
+
+    @property
+    def glat(self):
+        return self.glonlat[1]
 
     def _load_params(self):
         # Open lightcurve file

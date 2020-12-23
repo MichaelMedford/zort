@@ -7,6 +7,9 @@ containing a single color lightcurve of a ZTF object.
 import os
 import pickle
 import numpy as np
+from astropy.coordinates import SkyCoord
+import astropy.units as u
+
 from zort.lightcurve import Lightcurve
 from zort.object import Object
 from zort.plot import plot_objects
@@ -68,6 +71,26 @@ class Source:
         radec = self._calculate_radec()
         self.ra = radec[0]
         self.dec = radec[1]
+
+        self._glonlat = None
+
+    @property
+    def glonlat(self):
+        if self._glonlat is None:
+            coord = SkyCoord(self.ra, self.dec, unit=u.degree, frame='icrs')
+            glon, glat = coord.galactic.l.value, coord.galactic.b.value
+            if glon > 180:
+                glon -= 360
+            self._glonlat = (glon, glat)
+        return self._glonlat
+
+    @property
+    def glon(self):
+        return self.glonlat[0]
+
+    @property
+    def glat(self):
+        return self.glonlat[1]
 
     def _return_object_print_info(self, object):
         if object is None:
