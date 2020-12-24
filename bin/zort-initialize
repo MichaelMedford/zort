@@ -45,7 +45,8 @@ def main():
         rank = 0
         size = 1
 
-    lightcurve_files = glob.glob('field*.txt')
+    radec_maps = glob.glob('field*.radec_map')
+    lightcurve_files = [f.replace('.radec_map', '.txt') for f in radec_maps]
     lightcurve_files.sort()
 
     if rank == 0:
