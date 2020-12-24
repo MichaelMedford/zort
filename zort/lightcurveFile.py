@@ -13,6 +13,7 @@ from zort.object import Object
 from zort.utils import return_filename
 from zort.utils import return_objects_filename, \
     return_radec_map_filename, \
+    return_rcid_map_filename, \
     return_objects_map_filename
 from zort.radec import return_rcid
 
@@ -79,36 +80,43 @@ class LightcurveFile:
     save_objects('objects.%i.list' % rank, interesting_objects)
     """
 
-    def __init__(self, filename, init_object_position=40,
-                 proc_rank=0, proc_size=1, apply_catmask=True):
+    def __init__(self, filename,  proc_rank=0, proc_size=1,
+                 apply_catmask=True, rcids_to_read=None):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
         self.objects_filename = return_objects_filename(filename)
         self.objects_map_filename = return_objects_map_filename(filename)
         self.radec_map_filename = return_radec_map_filename(filename)
-
-        self.init_object_position = init_object_position
-        self.objects_file = self.return_objects_file()
-        self.objects_map = self.load_objects_map()
+        self.rcid_map_filename = return_rcid_map_filename(filename)
         self.radec_map = self.load_radec_map()
+        self.rcid_map = self.load_rcid_map()
+
+        self.rcid_filters_to_read = self.load_rcid_filters_to_read(rcids_to_read)
+        filterid, rcid = self.rcid_filters_to_read.pop()
+        pointer_start, pointer_end = self.rcid_map[filterid][rcid]
+        self.objects_file = self.return_objects_file(pointer_start)
+        self.pointer_end = self.rcid_map[filterid][rcid][1]
+
+        self.objects_map = self.load_objects_map()
+
         self.proc_rank = proc_rank
         self.proc_size = proc_size
         self.fieldid = int(os.path.basename(filename).split('_')[0].
                            replace('field', ''))
-        self.objects_file_counter = 0
+        self.objects_counter = 0
         self.apply_catmask = apply_catmask
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        while self.objects_file_counter % self.proc_size != self.proc_rank:
+        while self.objects_counter % self.proc_size != self.proc_rank:
             line = self._return_objects_file_line()
-            if line == '':
+            if line is None:
                 raise StopIteration
 
         line = self._return_objects_file_line()
-        if line == '':
+        if line is None:
             raise StopIteration
         return self.return_object(line)
 
@@ -117,7 +125,18 @@ class LightcurveFile:
 
     def _return_objects_file_line(self):
         line = self.objects_file.readline()
-        self.objects_file_counter += 1
+        pointer_current = self.objects_file.tell()
+
+        if line == '' or pointer_current > self.pointer_end:
+            if len(self.rcid_filters_to_read) == 0:
+                return None
+            filterid, rcid = self.rcid_filters_to_read.pop()
+            pointer_start, pointer_end = self.rcid_map[filterid][rcid]
+            self.pointer_end = pointer_end
+            self.objects_file.seek(pointer_start)
+            return self._return_objects_file_line()
+
+        self.objects_counter += 1
         return line
 
     def _return_parsed_line(self, line):
@@ -142,9 +161,9 @@ class LightcurveFile:
                       radec_map=self.radec_map,
                       apply_catmask=self.apply_catmask)
 
-    def return_objects_file(self):
+    def return_objects_file(self, pointer_start):
         file = open(self.objects_filename, 'r')
-        file.seek(self.init_object_position)
+        file.seek(pointer_start)
         return file
 
     def load_objects_map(self):
@@ -154,6 +173,26 @@ class LightcurveFile:
     def load_radec_map(self):
         radec_map = pickle.load(open(self.radec_map_filename, 'rb'))
         return radec_map
+    
+    def load_rcid_map(self):
+        rcid_map = pickle.load(open(self.rcid_map_filename, 'rb'))
+        return rcid_map
+
+    def load_rcid_filters_to_read(self, rcids_to_read):
+        if rcids_to_read is None:
+            rcids_to_read = list(range(64))
+
+        rcid_filters_to_read = []
+        for filterid in [1, 2, 3]:
+            if filterid not in self.rcid_map:
+                continue
+            for rcid in rcids_to_read:
+                if rcid not in self.rcid_map[filterid]:
+                    continue
+                rcid_filters_to_read.append((filterid, rcid))
+
+        return rcid_filters_to_read
+
 
     def locate_objects_by_radec(self, ra, dec, rcid=None, radius_as=2):
         if rcid is None:

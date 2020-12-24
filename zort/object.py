@@ -10,11 +10,15 @@ locate_siblings function.
 import os
 import pickle
 import numpy as np
+from astropy.coordinates import SkyCoord
+import astropy.units as u
+
 from zort.lightcurve import Lightcurve
 from zort.utils import return_filename, return_objects_filename, \
     return_objects_map_filename, return_radec_map_filename, \
     filterid_dict
 from zort.plot import plot_object, plot_objects
+from zort.radec import field_is_pole
 
 
 ################################
@@ -38,7 +42,7 @@ class Object:
         # Check object_id and lightcurve_position
         if object_id is None and lightcurve_position is None:
             raise Exception('ObjectID or lightcurve_position must be defined.')
-        elif object_id and lightcurve_position:
+        elif object_id is not None and lightcurve_position is not None:
             raise Exception('Only initialize object with Object ID '
                             'or lightcurve position, but not both.')
 
@@ -49,13 +53,13 @@ class Object:
         self.radec_map_filename = return_radec_map_filename(filename)
 
         self.objects_map = None
-        if object_id:
+        if object_id is not None:
             if objects_map:
                 self.objects_map = objects_map
             else:
                 self.objects_map = self.load_objects_map()
             self.lightcurve_position = self.objects_map[object_id]
-        elif lightcurve_position:
+        elif lightcurve_position is not None:
             self.lightcurve_position = lightcurve_position
 
         params = self._load_params()
@@ -69,9 +73,10 @@ class Object:
         self.color = self._return_filterid_color()
         self.apply_catmask = apply_catmask
         self.PS_g_minus_r = PS_g_minus_r
-        self.lightcurve = self._load_lightcurve()
+        self._lightcurve = None
         self.siblings = None
         self.nsiblings = 0
+        self._glonlat = None
 
         if radec_map:
             self.radec_map = radec_map
@@ -91,6 +96,24 @@ class Object:
         title += 'Lightcurve Buffer Position: %i\n' % self.lightcurve_position
 
         return title
+
+    @property
+    def glonlat(self):
+        if self._glonlat is None:
+            coord = SkyCoord(self.ra, self.dec, unit=u.degree, frame='icrs')
+            glon, glat = coord.galactic.l.value, coord.galactic.b.value
+            if glon > 180:
+                glon -= 360
+            self._glonlat = (glon, glat)
+        return self._glonlat
+
+    @property
+    def glon(self):
+        return self.glonlat[0]
+
+    @property
+    def glat(self):
+        return self.glonlat[1]
 
     def _load_params(self):
         # Open lightcurve file
@@ -129,6 +152,12 @@ class Object:
     def return_siblings_filename(self):
         siblings_filename = self.filename.replace('.txt', '.siblings')
         return siblings_filename
+
+    @property
+    def lightcurve(self):
+        if not self._lightcurve:
+            self._lightcurve = self._load_lightcurve()
+        return self._lightcurve
 
     def _load_lightcurve(self):
         return Lightcurve(self.filename, self.lightcurve_position,
@@ -169,6 +198,7 @@ class Object:
                                  if i not in skip_filterids]
         rcid = self.rcid
         siblings_object_ids = []
+        is_pole = field_is_pole(self.fieldid)
 
         for filterid in sibling_filterids:
             color = filterid_dict[filterid]
@@ -182,7 +212,10 @@ class Object:
                 continue
 
             kdtree, object_id_arr = self.radec_map[filterid][rcid]
-            idx = kdtree.query_ball_point((self.ra, self.dec), radius_deg)
+            query_ra, query_dec = self.ra, self.dec
+            if is_pole and query_ra > 180:
+                query_ra -= 360
+            idx = kdtree.query_ball_point((query_ra, query_dec), radius_deg)
             if len(idx) == 0:
                 continue
             sibling_object_id = int(object_id_arr[idx[0]])

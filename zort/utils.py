@@ -36,6 +36,10 @@ def return_radec_map_filename(filename):
     return _return_util_filename(filename, 'radec_map')
 
 
+def return_rcid_map_filename(filename):
+    return _return_util_filename(filename, 'rcid_map')
+
+
 def _return_util_filename(filename, extension):
     util_filename = filename.replace('txt', extension)
     if os.path.exists(util_filename):

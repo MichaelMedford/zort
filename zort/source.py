@@ -7,6 +7,9 @@ containing a single color lightcurve of a ZTF object.
 import os
 import pickle
 import numpy as np
+from astropy.coordinates import SkyCoord
+import astropy.units as u
+
 from zort.lightcurve import Lightcurve
 from zort.object import Object
 from zort.plot import plot_objects
@@ -60,14 +63,34 @@ class Source:
                                      lightcurve_position_g,
                                      lightcurve_position_r,
                                      lightcurve_position_i)
-        self.objects = objects
         self.object_g = objects[0]
         self.object_r = objects[1]
         self.object_i = objects[2]
+        self.objects = [o for o in objects if o is not None]
 
         radec = self._calculate_radec()
         self.ra = radec[0]
         self.dec = radec[1]
+
+        self._glonlat = None
+
+    @property
+    def glonlat(self):
+        if self._glonlat is None:
+            coord = SkyCoord(self.ra, self.dec, unit=u.degree, frame='icrs')
+            glon, glat = coord.galactic.l.value, coord.galactic.b.value
+            if glon > 180:
+                glon -= 360
+            self._glonlat = (glon, glat)
+        return self._glonlat
+
+    @property
+    def glon(self):
+        return self.glonlat[0]
+
+    @property
+    def glat(self):
+        return self.glonlat[1]
 
     def _return_object_print_info(self, object):
         if object is None:
@@ -101,15 +124,15 @@ class Source:
                             'with at least one Object ID '
                             'or lightcurve position.')
 
-        if object_id_g and lightcurve_position_g:
+        if object_id_g is not None and lightcurve_position_g is not None:
             raise Exception('Only initialize g object with Object ID '
                             'or lightcurve position, but not both.')
 
-        if object_id_r and lightcurve_position_r:
+        if object_id_r is not None and lightcurve_position_r is not None:
             raise Exception('Only initialize r object with Object ID '
                             'or lightcurve position, but not both.')
 
-        if object_id_i and lightcurve_position_i:
+        if object_id_i is not None and lightcurve_position_i is not None:
             raise Exception('Only initialize i object with Object ID '
                             'or lightcurve position, but not both.')
 
@@ -117,7 +140,7 @@ class Source:
         if object_id is None and lightcurve_position is None:
             return None
 
-        if lightcurve_position:
+        if lightcurve_position is not None:
             obj = Object(self.filename,
                          lightcurve_position=lightcurve_position,
                          objects_map=self.objects_map)

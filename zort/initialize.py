@@ -10,6 +10,7 @@ import pickle
 from collections import defaultdict
 import numpy as np
 from scipy.spatial import cKDTree
+from zort.radec import lightcurve_file_is_pole
 
 
 def generate_objects_file(lightcurve_file):
@@ -51,10 +52,18 @@ def generate_objects_file(lightcurve_file):
         pickle.dump(object_map, fileObj)
 
 
-def save_radec_map(DR1_object_file, radec_map):
-    radec_map_filename = DR1_object_file.replace('.objects', '.radec_map')
-    with open(radec_map_filename, 'wb') as fileObj:
-        pickle.dump(radec_map, fileObj)
+def save_radec_map(lightcurve_file, radec_map):
+    _save_map(lightcurve_file, radec_map, 'radec_map')
+    
+    
+def save_rcid_map(lightcurve_file, rcid_map):
+    _save_map(lightcurve_file, rcid_map, 'rcid_map')
+
+
+def _save_map(lightcurve_file, map, extension):
+    map_filename = lightcurve_file.replace('txt', extension)
+    with open(map_filename, 'wb') as fileObj:
+        pickle.dump(map, fileObj)
 
 
 def return_radec_map_size(radec_map):
@@ -72,10 +81,15 @@ def return_radec_map_filesize(radec_map):
     return radec_map_filesize
 
 
-def generate_radec_map(lightcurve_file):
+def generate_radec_rcid_maps(lightcurve_file):
     radec_map_file = lightcurve_file.replace('.txt', '.radec_map')
     if os.path.exists(radec_map_file):
         print('%s already exists. Skipping.' % radec_map_file)
+        return
+
+    rcid_map_file = lightcurve_file.replace('.txt', '.rcid_map')
+    if os.path.exists(rcid_map_file):
+        print('%s already exists. Skipping.' % rcid_map_file)
         return
 
     objects_file = lightcurve_file.replace('.txt', '.objects')
@@ -87,8 +101,19 @@ def generate_radec_map(lightcurve_file):
     filterid, filterid_current = None, None
     ra_arr, dec_arr, object_id_arr = [], [], []
     radec_map = defaultdict(dict)
+    object_location_start = None
+    rcid_map = defaultdict(dict)
 
-    for line in f_in:
+    is_pole = lightcurve_file_is_pole(lightcurve_file)
+
+    while True:
+        line = f_in.readline()
+        object_location_current = f_in.tell() - len(line)
+
+        # Check for end of the file
+        if not line:
+            break
+
         data = line.replace('\n', '').split(',')
 
         object_id = int(data[0])
@@ -97,25 +122,41 @@ def generate_radec_map(lightcurve_file):
 
         # Initialize the rcid
         if rcid_current is None:
+            object_location_start = object_location_current
             rcid_current = rcid
             filterid_current = filterid
 
         # Check to see if the block has switched
         if rcid != rcid_current:
+            # set bounds of rcid
+            rcid_map[filterid_current][rcid_current] = (
+                object_location_start, object_location_current)
+            object_location_start = object_location_current
+
+            # build kdtree for rcid
             objects = np.array([ra_arr, dec_arr]).T
             kdtree = cKDTree(objects)
             radec_map[filterid_current][rcid_current] = \
                 (kdtree, object_id_arr)
 
+            # update rcid and filter for new region
             rcid_current = rcid
             filterid_current = filterid
             ra_arr, dec_arr, object_id_arr = [], [], []
 
         ra, dec = float(data[5]), float(data[6])
+        if is_pole and ra > 180:
+            ra -= 360
+
         ra_arr.append(ra)
         dec_arr.append(dec)
         object_id_arr.append(object_id)
 
+    # update rcid_map with final rcid
+    rcid_map[filterid_current][rcid_current] = (
+        object_location_start, object_location_current)
+
+    # build kdtree for final rcid
     objects = np.array([ra_arr, dec_arr]).T
     kdtree = cKDTree(objects)
     radec_map[filterid_current][rcid_current] = \
@@ -123,4 +164,5 @@ def generate_radec_map(lightcurve_file):
 
     f_in.close()
 
-    save_radec_map(radec_map_file, radec_map)
+    save_radec_map(lightcurve_file, radec_map)
+    save_rcid_map(lightcurve_file, rcid_map)
