@@ -76,7 +76,7 @@ def load_ZTF_CCD_corners(field_id):
         ra_offset, dec_offset = -float(ra_offset), float(dec_offset)
         chip = int(chip)
         ra_corner, dec_corner = wcs.all_pix2world(ra_offset, dec_offset, 1)
-        if is_pole:
+        if is_pole and ra_corner > 180:
             ra_corner -= 360
         if chip not in ZTF_CCD_corners.keys():
             ZTF_CCD_corners[chip] = [[ra_corner, dec_corner]]
