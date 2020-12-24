@@ -213,7 +213,7 @@ class Object:
 
             kdtree, object_id_arr = self.radec_map[filterid][rcid]
             query_ra, query_dec = self.ra, self.dec
-            if is_pole and qurey_ra > 180:
+            if is_pole and query_ra > 180:
                 query_ra -= 360
             idx = kdtree.query_ball_point((query_ra, query_dec), radius_deg)
             if len(idx) == 0:
