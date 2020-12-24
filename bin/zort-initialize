@@ -7,6 +7,7 @@ the current directory. These initialization files are required for using zort.
 
 import glob
 import argparse
+import os
 import sys
 import subprocess
 import numpy as np
@@ -45,8 +46,9 @@ def main():
         rank = 0
         size = 1
 
-    radec_maps = glob.glob('field*.radec_map')
-    lightcurve_files = [f.replace('.radec_map', '.txt') for f in radec_maps]
+    lightcurve_files = glob.glob('field*.txt')
+    lightcurve_files = [f for f in lightcurve_files
+                        if not os.path.exists(f.replace('.txt', '.radec_map'))]
     lightcurve_files.sort()
 
     if rank == 0:
