@@ -45,7 +45,11 @@ def lightcurve_file_is_pole(lightcurve_file):
     return field_is_pole(field)
 
 
-def load_ZTF_CCD_corners(field_id=0, field_ra=0, field_dec=0):
+def load_ZTF_CCD_corners(field_id):
+    ZTF_fields = load_ZTF_fields()
+    ZTF_field = ZTF_fields[ZTF_fields['id'] == field_id]
+    field_ra, field_dec = ZTF_field['ra'][0], ZTF_field['dec'][0]
+
     wcs = WCS({'CTYPE1': 'RA---TAN',
                'CTYPE2': 'DEC--TAN',
                'CRPIX1': 0,
@@ -98,8 +102,8 @@ def _calculate_two_point_midpoint(ra0, dec0, ra1, dec1, field_id=None):
     return ra, dec
 
 
-def return_ZTF_RCID_corners(field_id, field_ra, field_dec):
-    ZTF_CCD_corners = load_ZTF_CCD_corners(field_id, field_ra, field_dec)
+def return_ZTF_RCID_corners(field_id):
+    ZTF_CCD_corners = load_ZTF_CCD_corners(field_id)
 
     ZTF_RCID_corners = {}
     for CCD, CCD_corners_single in ZTF_CCD_corners.items():
@@ -208,10 +212,7 @@ def test_within_RCID_corners(ra, dec, ZTF_RCID_corners_single):
 
 
 def return_rcid(field_id, ra, dec):
-    ZTF_fields = load_ZTF_fields()
-    ZTF_field = ZTF_fields[ZTF_fields['id'] == field]
-    field_ra, field_dec = ZTF_field['ra'][0], ZTF_field['dec'][0]
-    ZTF_RCID_corners = return_ZTF_RCID_corners(field_id, field_ra, field_dec)
+    ZTF_RCID_corners = return_ZTF_RCID_corners(field_id)
 
     for rcid in range(64):
         ZTF_RCID_corners_single = ZTF_RCID_corners[rcid]
