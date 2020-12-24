@@ -145,7 +145,7 @@ def generate_radec_rcid_maps(lightcurve_file):
             ra_arr, dec_arr, object_id_arr = [], [], []
 
         ra, dec = float(data[5]), float(data[6])
-        if is_pole and ra > 180:
+        if is_pole:
             ra -= 360
 
         ra_arr.append(ra)
