@@ -92,10 +92,14 @@ class LightcurveFile:
         self.rcid_map = self.load_rcid_map()
 
         self.rcid_filters_to_read = self.load_rcid_filters_to_read(rcids_to_read)
-        filterid, rcid = self.rcid_filters_to_read.pop()
-        pointer_start, pointer_end = self.rcid_map[filterid][rcid]
-        self.objects_file = self.return_objects_file(pointer_start)
-        self.pointer_end = self.rcid_map[filterid][rcid][1]
+        if len(self.rcid_filters_to_read) == 0:
+            self.objects_file = self.return_objects_file()
+            self.pointer_end = None
+        else:
+            filterid, rcid = self.rcid_filters_to_read.pop()
+            pointer_start, pointer_end = self.rcid_map[filterid][rcid]
+            self.objects_file = self.return_objects_file(pointer_start=pointer_start)
+            self.pointer_end = self.rcid_map[filterid][rcid][1]
 
         self.objects_map = self.load_objects_map()
 
@@ -110,6 +114,9 @@ class LightcurveFile:
         return self
 
     def __next__(self):
+        if self.pointer_end is None:
+            raise StopIteration
+
         while self.objects_counter % self.proc_size != self.proc_rank:
             line = self._return_objects_file_line()
             if line is None:
@@ -161,7 +168,7 @@ class LightcurveFile:
                       radec_map=self.radec_map,
                       apply_catmask=self.apply_catmask)
 
-    def return_objects_file(self, pointer_start):
+    def return_objects_file(self, pointer_start=40):
         file = open(self.objects_filename, 'r')
         file.seek(pointer_start)
         return file
