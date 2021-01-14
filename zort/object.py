@@ -230,9 +230,7 @@ class Object:
 
     def plot_lightcurve(self, filename=None, insert_radius=30):
         if filename is None:
-            filename = '%s_%i_lc.png' % (self.filename.replace('.txt', ''),
-                                         self.object_id)
-            filename = os.path.basename(filename)
+            filename = 'field%06d_%i_lc.png' % (self.fieldid, self.object_id)
 
         plot_object(filename=filename, object=self,
                     insert_radius=insert_radius)
@@ -242,9 +240,7 @@ class Object:
             self.locate_siblings()
 
         if filename is None:
-            filename = '%s_%s_lc_with_siblings.png' % (
-                self.filename.replace('.txt', ''), self.object_id)
-            filename = os.path.basename(filename)
+            filename = 'field%06d_%i_lc_sibs.png' % (self.fieldid, self.object_id)
 
         source_dict = {'g': None, 'r': None, 'i': None,
                        self.color: self}

@@ -200,7 +200,6 @@ class LightcurveFile:
 
         return rcid_filters_to_read
 
-
     def locate_objects_by_radec(self, ra, dec, rcid=None, radius_as=2):
         if rcid is None:
             rcid = return_rcid(self.fieldid, ra, dec)
