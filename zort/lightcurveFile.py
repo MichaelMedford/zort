@@ -211,6 +211,8 @@ class LightcurveFile:
         radius_deg = radius_as / 3600.
         objects = []
         for filterid in self.radec_map:
+            if rcid not in self.radec_map[filterid]:
+                continue
             kdtree, lightcurve_position_arr = self.radec_map[filterid][rcid]
             idx_arr = kdtree.query_ball_point((ra, dec), radius_deg)
             if len(idx_arr) == 0:
