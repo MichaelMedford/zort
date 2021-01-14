@@ -232,6 +232,7 @@ class Object:
         if filename is None:
             filename = '%s_%i_lc.png' % (self.filename.replace('.txt', ''),
                                          self.object_id)
+            filename = os.path.basename(filename)
 
         plot_object(filename=filename, object=self,
                     insert_radius=insert_radius)
@@ -243,6 +244,7 @@ class Object:
         if filename is None:
             filename = '%s_%s_lc_with_siblings.png' % (
                 self.filename.replace('.txt', ''), self.object_id)
+            filename = os.path.basename(filename)
 
         source_dict = {'g': None, 'r': None, 'i': None,
                        self.color: self}
