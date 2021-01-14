@@ -11,6 +11,7 @@ import os
 import pickle
 
 from zort.object import Object
+from zort.source import Source
 from zort.utils import return_filename
 from zort.utils import return_objects_filename, \
     return_radec_map_filename, \
@@ -221,29 +222,30 @@ class LightcurveFile:
                 objects.append(obj)
         return objects
 
-    def _extract_object_by_color(self, objects, color):
+    def _extract_object_id_by_color(self, objects, color):
         objects_color = [obj for obj in objects if obj.color == color]
         if len(objects_color) == 0:
             return None
         elif len(objects_color) == 1:
-            return objects_color[0]
+            return objects_color[0].object_id
         else:
             print('Multiple objects found for filter %s. '
                   'Returning first.' % color)
-            return objects_color[0]
+            return objects_color[0].object_id
 
     def locate_source_by_radec(self, ra, dec, rcid=None, radius_as=2):
         objects = self.locate_objects_by_radec(ra, dec,
                                                rcid=rcid,
                                                radius_as=radius_as)
-        g_object = self._extract_object_by_color(objects, 'g')
-        r_object = self._extract_object_by_color(objects, 'r')
-        i_object = self._extract_object_by_color(objects, 'i')
-        if g_object is None and r_object is None and i_object is None:
+        g_object_id = self._extract_object_id_by_color(objects, 'g')
+        r_object_id = self._extract_object_id_by_color(objects, 'r')
+        i_object_id = self._extract_object_id_by_color(objects, 'i')
+        if g_object_id is None and r_object_id is None and i_object_id is None:
             return None
-        source = Source(object_id_g=g_object.id,
-                        object_id_r=r_object.id,
-                        object_id_i=i_object.id,
+        source = Source(self.filename,
+                        object_id_g=g_object_id,
+                        object_id_r=r_object_id,
+                        object_id_i=i_object_id,
                         apply_catmask=self.apply_catmask,
                         radec_map=self.radec_map)
         return source
@@ -292,6 +294,6 @@ def locate_sources_by_radec(ra, dec, radius_as=2):
         sources_lightcurve = lightcurveFile.locate_source_by_radec(ra, dec,
                                                                    radius_as=radius_as)
         if sources_lightcurve is not None:
-            sources.extend(sources_lightcurve)
+            sources.append(sources_lightcurve)
 
     return sources
