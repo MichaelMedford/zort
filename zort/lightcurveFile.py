@@ -236,9 +236,9 @@ class LightcurveFile:
         objects = self.locate_objects_by_radec(ra, dec,
                                                rcid=rcid,
                                                radius_as=radius_as)
-        g_object = _extract_object_by_color(objects, 'g')
-        r_object = _extract_object_by_color(objects, 'r')
-        i_object = _extract_object_by_color(objects, 'i')
+        g_object = self._extract_object_by_color(objects, 'g')
+        r_object = self._extract_object_by_color(objects, 'r')
+        i_object = self._extract_object_by_color(objects, 'i')
         if g_object is None and r_object is None and i_object is None:
             return None
         source = Source(object_id_g=g_object.id,
