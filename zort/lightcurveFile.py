@@ -6,6 +6,7 @@ iteration through a lightcurve file in order to inspect each object's
 lightcurve. Filters can be applied to objects and/or lightcurves.
 """
 
+import glob
 import os
 import pickle
 
@@ -244,3 +245,51 @@ class LightcurveFile:
                         apply_catmask=self.apply_catmask,
                         radec_map=self.radec_map)
         return source
+
+
+def _is_radec_in_lightcurveFile(filename, ra, dec):
+    ra_bounds = filename.split('_')[1].replace('ra', '')
+    ra_min = float(ra_bounds.split('to')[0])
+    ra_max = float(ra_bounds.split('to')[1])
+
+    dec_bounds = filename.split('_')[2].replace('dec', '').replace('.txt', '')
+    dec_min = float(dec_bounds.split('to')[0])
+    dec_max = float(dec_bounds.split('to')[1])
+
+    if ra < ra_min or ra > ra_max:
+        return False
+    if dec < dec_min or dec > dec_max:
+        return False
+    return True
+
+
+def locate_objects_by_radec(ra, dec, radius_as=2):
+    objects = []
+    lightcurve_filenames = glob.glob('field*txt')
+    for filename in lightcurve_filenames:
+        if not _is_radec_in_lightcurveFile(filename, ra, dec):
+            continue
+
+        lightcurveFile = LightcurveFile(filename)
+        objects_lightcurve = lightcurveFile.locate_objects_by_radec(ra, dec,
+                                                                    radius_as=radius_as)
+        if objects_lightcurve is not None:
+            objects.extend(objects_lightcurve)
+
+    return objects
+
+
+def locate_sources_by_radec(ra, dec, radius_as=2):
+    sources = []
+    lightcurve_filenames = glob.glob('field*txt')
+    for filename in lightcurve_filenames:
+        if not _is_radec_in_lightcurveFile(filename, ra, dec):
+            continue
+
+        lightcurveFile = LightcurveFile(filename)
+        sources_lightcurve = lightcurveFile.locate_source_by_radec(ra, dec,
+                                                                   radius_as=radius_as)
+        if sources_lightcurve is not None:
+            sources.extend(sources_lightcurve)
+
+    return sources

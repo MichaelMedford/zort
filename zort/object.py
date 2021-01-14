@@ -7,14 +7,12 @@ with a different color of the same astrophysical object labelled as a different
 object. This class can find and save spatially coincident objects with the
 locate_siblings function.
 """
-import glob
 import os
 import pickle
 import numpy as np
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 
-from zort.lightcurveFile import LightcurveFile
 from zort.lightcurve import Lightcurve
 from zort.utils import return_filename, return_objects_filename, \
     return_objects_map_filename, return_radec_map_filename, \
@@ -273,30 +271,5 @@ def load_objects(filename):
     for line in open(filename, 'r'):
         filename, lightcurve_position = line.replace('\n', '').split(',')
         objects.append(Object(filename, lightcurve_position))
-
-    return objects
-
-
-def locate_objects_by_radec(ra, dec):
-    objects = []
-    lightcurve_filenames = glob.glob('field*txt')
-    for filename in lightcurve_filenames:
-        ra_bounds = filename.split('_')[1].replace('ra', '')
-        ra_min = float(ra_bounds.split('to')[0])
-        ra_max = float(ra_bounds.split('to')[1])
-
-        dec_bounds = filename.split('_')[2].replace('dec', '').replace('.txt', '')
-        dec_min = float(dec_bounds.split('to')[0])
-        dec_max = float(dec_bounds.split('to')[1])
-
-        if ra < ra_min or ra > ra_max:
-            continue
-        if dec < dec_min or dec > dec_max:
-            continue
-
-        lightcurveFile = LightcurveFile(filename)
-        objects_lightcurve = lightcurveFile.locate_objects_by_radec(ra, dec)
-        if objects_lightcurve is not None:
-            objects.extend(objects_lightcurve)
 
     return objects
