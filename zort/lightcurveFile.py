@@ -293,9 +293,9 @@ def locate_sources_by_radec(ra, dec, radius_as=2):
             continue
 
         lightcurveFile = LightcurveFile(filename)
-        sources_lightcurve = lightcurveFile.locate_source_by_radec(ra, dec,
-                                                                   radius_as=radius_as)
-        if sources_lightcurve is not None:
-            sources.append(sources_lightcurve)
+        source = lightcurveFile.locate_source_by_radec(ra, dec,
+                                                       radius_as=radius_as)
+        if source is not None:
+            sources.append(source)
 
     return sources
