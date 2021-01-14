@@ -65,7 +65,7 @@ def plot_objects(filename, object_g=None, object_r=None,
     objects = [obj for obj in objects if obj is not None]
 
     if len(objects) == 1:
-        plot_object(objects[0], filename)
+        plot_object(filename, objects[0])
     elif len(objects) == 2:
         N_rows = 2
         figsize_height = 6
