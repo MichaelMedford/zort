@@ -233,7 +233,9 @@ class LightcurveFile:
             return objects_color[0]
 
     def locate_source_by_radec(self, ra, dec, rcid=None, radius_as=2):
-        objects = locate_objects_by_radec(ra, dec, rcid, radius_as)
+        objects = self.locate_objects_by_radec(ra, dec,
+                                               rcid=rcid,
+                                               radius_as=radius_as)
         g_object = _extract_object_by_color(objects, 'g')
         r_object = _extract_object_by_color(objects, 'r')
         i_object = _extract_object_by_color(objects, 'i')
