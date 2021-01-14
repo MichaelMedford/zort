@@ -219,5 +219,4 @@ def return_rcid(field_id, ra, dec):
         if test_within_RCID_corners(ra, dec, ZTF_RCID_corners_single):
             return rcid
 
-    print('No matching rcid found')
     return None
