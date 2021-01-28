@@ -10,7 +10,7 @@ import pickle
 from collections import defaultdict
 import numpy as np
 from scipy.spatial import cKDTree
-from zort.radec import lightcurve_file_shifts
+from zort.radec import lightcurve_file_shifts, return_shifted_ra
 
 
 def generate_objects_file(lightcurve_file):

@@ -18,8 +18,7 @@ from zort.utils import return_filename, return_objects_filename, \
     return_objects_map_filename, return_radec_map_filename, \
     filterid_dict
 from zort.plot import plot_object, plot_objects
-from zort.radec import field_is_pole
-
+from zort.radec import lightcurve_file_shifts, return_shifted_ra
 
 ################################
 #                              #
@@ -198,7 +197,10 @@ class Object:
                                  if i not in skip_filterids]
         rcid = self.rcid
         siblings_object_ids = []
-        is_pole = field_is_pole(self.fieldid)
+        shift_low, shift_high = lightcurve_file_shifts(self.filename)
+
+        query_dec = self.dec
+        query_ra = return_shifted_ra(self.ra, shift_low, shift_high)
 
         for filterid in sibling_filterids:
             color = filterid_dict[filterid]
@@ -212,9 +214,6 @@ class Object:
                 continue
 
             kdtree, object_id_arr = self.radec_map[filterid][rcid]
-            query_ra, query_dec = self.ra, self.dec
-            if is_pole and query_ra > 180:
-                query_ra -= 360
             idx = kdtree.query_ball_point((query_ra, query_dec), radius_deg)
             if len(idx) == 0:
                 continue
