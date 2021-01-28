@@ -12,6 +12,16 @@ import os
 import numpy as np
 
 
+def return_shifted_ra(ra, shift_low, shift_high):
+    if shift_low and ra > 180:
+        ra_final = ra - 360
+    elif shift_high and ra < 180:
+        ra_final = ra + 360
+    else:
+        ra_final = ra
+    return ra_final
+
+
 def load_ZTF_CCD_corners(field_id):
 
     ZTF_fields = load_ZTF_fields()
@@ -65,7 +75,7 @@ def load_ZTF_CCD_corners(field_id):
     return ZTF_CCD_corners, shift_low, shift_high
 
 
-def _calculate_two_point_midpoint(ra0, dec0, ra1, dec1):
+def _calculate_two_point_midpoint(ra0, dec0, ra1, dec1, shift_low, shift_high):
     coord1 = SkyCoord(ra0 * u.deg, dec0 * u.deg, frame='icrs')
     coord2 = SkyCoord(ra1 * u.deg, dec1 * u.deg, frame='icrs')
     pa = coord1.position_angle(coord2)
@@ -73,7 +83,9 @@ def _calculate_two_point_midpoint(ra0, dec0, ra1, dec1):
     midpoint = coord1.directional_offset_by(pa, sep / 2)
 
     ra, dec = midpoint.ra.value, midpoint.dec.value
-    return ra, dec
+    ra_midpoint = return_shifted_ra(ra, shift_low, shift_high)
+
+    return [ra_midpoint, dec]
 
 
 def return_ZTF_RCID_corners(field_id):
@@ -87,15 +99,21 @@ def return_ZTF_RCID_corners(field_id):
         CCD_bottom_left = CCD_corners_single[3]
 
         right_midpoint = _calculate_two_point_midpoint(*CCD_bottom_right,
-                                                       *CCD_top_right)
+                                                       *CCD_top_right,
+                                                       shift_low, shift_high)
         left_midpoint = _calculate_two_point_midpoint(*CCD_top_left,
-                                                      *CCD_bottom_left)
+                                                      *CCD_bottom_left,
+                                                      shift_low, shift_high)
         top_midpoint = _calculate_two_point_midpoint(*CCD_top_right,
-                                                     *CCD_top_left)
+                                                     *CCD_top_left,
+                                                     shift_low, shift_high)
         bottom_midpoint = _calculate_two_point_midpoint(*CCD_bottom_right,
-                                                        *CCD_bottom_left)
+                                                        *CCD_bottom_left,
+                                                        shift_low, shift_high)
         CCD_midpoint = _calculate_two_point_midpoint(*left_midpoint,
-                                                     *right_midpoint)
+                                                     *right_midpoint,
+                                                     shift_low, shift_high)
+
 
         for quad in np.arange(4):
             if quad == 0:
@@ -159,19 +177,8 @@ def return_fields(ra, dec):
         field_id, field_ra, field_dec = ZTF_field['id'], \
                                         ZTF_field['ra'], \
                                         ZTF_field['dec']
-        ZTF_CCD_corners, shift_low, shift_high = \
-            load_ZTF_CCD_corners(field_id, field_ra, field_dec)
-
-        if shift_low:
-            if ra > 180:
-                ra_test = ra - 360
-            else:
-                ra_test = ra
-        elif shift_high:
-            if ra > 180:
-                ra_test = ra
-            else:
-                ra_test = ra + 360
+        ZTF_CCD_corners, shift_low, shift_high = load_ZTF_CCD_corners(field_id)
+        ra_test = return_shifted_ra(ra, shift_low, shift_high)
 
         if test_within_CCD_corners(ra_test, dec, ZTF_CCD_corners):
             fields.append(ZTF_field['id'])
@@ -195,17 +202,7 @@ def test_within_RCID_corners(ra, dec, ZTF_RCID_corners_single):
 
 def return_rcid(field_id, ra, dec):
     ZTF_RCID_corners, shift_low, shift_high = return_ZTF_RCID_corners(field_id)
-
-    if shift_low:
-        if ra > 180:
-            ra_test = ra - 360
-        else:
-            ra_test = ra
-    elif shift_high:
-        if ra > 180:
-            ra_test = ra
-        else:
-            ra_test = ra + 360
+    ra_test = return_shifted_ra(ra, shift_low, shift_high)
 
     for rcid in range(64):
         ZTF_RCID_corners_single = ZTF_RCID_corners[rcid]
@@ -213,3 +210,9 @@ def return_rcid(field_id, ra, dec):
             return rcid
 
     return None
+
+
+def lightcurve_file_shifts(lightcurve_file):
+    field_id = int(lightcurve_file.split('_')[0].replace('field', ''))
+    _, shift_low, shift_high = load_ZTF_CCD_corners(field_id)
+    return shift_low, shift_high
