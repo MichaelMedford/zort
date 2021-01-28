@@ -13,7 +13,6 @@ import numpy as np
 
 
 def load_ZTF_CCD_corners(field_id):
-    assert if_field_is_pole_shift_high is not if_field_is_pole_shift_low
 
     ZTF_fields = load_ZTF_fields()
     ZTF_field = ZTF_fields[ZTF_fields['id'] == field_id]
