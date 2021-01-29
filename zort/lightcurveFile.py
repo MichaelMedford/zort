@@ -214,7 +214,8 @@ class LightcurveFile:
             if rcid not in self.radec_map[filterid]:
                 continue
             kdtree, lightcurve_position_arr = self.radec_map[filterid][rcid]
-            idx_arr = kdtree.query_ball_point((ra, dec), radius_deg)
+            ra_query = return_shifted_ra(ra, self.fieldid)
+            idx_arr = kdtree.query_ball_point((ra_query, dec), radius_deg)
             if len(idx_arr) == 0:
                 continue
             for idx in idx_arr:
@@ -286,6 +287,7 @@ def locate_objects_by_radec(ra, dec, radius_as=2):
     for filename in lightcurve_filenames:
         if not _is_radec_in_lightcurveFile(filename, ra, dec):
             continue
+        print(filename)
 
         lightcurveFile = LightcurveFile(filename)
         objects_lightcurve = lightcurveFile.locate_objects_by_radec(ra, dec,
