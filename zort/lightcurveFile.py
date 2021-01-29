@@ -260,11 +260,20 @@ def _is_radec_in_lightcurveFile(filename, ra, dec):
     ra_min = float(ra_bounds.split('to')[0])
     ra_max = float(ra_bounds.split('to')[1])
 
+    if ra_max < ra_min:
+        ra_max += 360
+        if ra < 180:
+            ra_query = ra + 360
+        else:
+            ra_query = ra
+    else:
+        ra_query = ra
+
     dec_bounds = filename.split('_')[2].replace('dec', '').replace('.txt', '')
     dec_min = float(dec_bounds.split('to')[0])
     dec_max = float(dec_bounds.split('to')[1])
 
-    if ra < ra_min or ra > ra_max:
+    if ra_query < ra_min or ra_query > ra_max:
         return False
     if dec < dec_min or dec > dec_max:
         return False
