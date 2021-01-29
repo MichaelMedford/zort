@@ -10,7 +10,7 @@ import pickle
 from collections import defaultdict
 import numpy as np
 from scipy.spatial import cKDTree
-from zort.radec import lightcurve_file_shifts, return_shifted_ra
+from zort.radec import return_shifted_ra
 
 
 def generate_objects_file(lightcurve_file):
@@ -103,8 +103,7 @@ def generate_radec_rcid_maps(lightcurve_file):
     radec_map = defaultdict(dict)
     object_location_start = None
     rcid_map = defaultdict(dict)
-
-    shift_low, shift_high = lightcurve_file_shifts(lightcurve_file)
+    field_id = int(lightcurve_file.split('_')[0].replace('field', ''))
 
     while True:
         line = f_in.readline()
@@ -145,7 +144,7 @@ def generate_radec_rcid_maps(lightcurve_file):
             ra_arr, dec_arr, object_id_arr = [], [], []
 
         ra, dec = float(data[5]), float(data[6])
-        ra_obj = return_shifted_ra(ra, shift_low, shift_high)
+        ra_obj = return_shifted_ra(ra, field_id)
 
         ra_arr.append(ra_obj)
         dec_arr.append(dec)

@@ -18,7 +18,7 @@ from zort.utils import return_filename, return_objects_filename, \
     return_objects_map_filename, return_radec_map_filename, \
     filterid_dict
 from zort.plot import plot_object, plot_objects
-from zort.radec import lightcurve_file_shifts, return_shifted_ra
+from zort.radec import return_shifted_ra
 
 ################################
 #                              #
@@ -197,10 +197,9 @@ class Object:
                                  if i not in skip_filterids]
         rcid = self.rcid
         siblings_object_ids = []
-        shift_low, shift_high = lightcurve_file_shifts(self.filename)
 
         query_dec = self.dec
-        query_ra = return_shifted_ra(self.ra, shift_low, shift_high)
+        query_ra = return_shifted_ra(self.ra, self.fieldid)
 
         for filterid in sibling_filterids:
             color = filterid_dict[filterid]
