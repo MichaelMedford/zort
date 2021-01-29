@@ -81,9 +81,9 @@ def calculate_shift_low_and_high_field_ids():
 
 
 def return_shifted_ra(ra, field_id):
-    if field_id in SHIFT_LOW_FIELD_IDS and ra > 180:
+    if field_id in SHIFT_LOW_FIELD_IDS and ra > 300:
         ra_final = ra - 360
-    elif field_id in SHIFT_HIGH_FIELD_IDS and ra < 180:
+    elif field_id in SHIFT_HIGH_FIELD_IDS and ra < 60:
         ra_final = ra + 360
     else:
         ra_final = ra
