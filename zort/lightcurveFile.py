@@ -17,7 +17,7 @@ from zort.utils import return_objects_filename, \
     return_radec_map_filename, \
     return_rcid_map_filename, \
     return_objects_map_filename
-from zort.radec import return_rcid
+from zort.radec import return_rcid, return_shifted_ra
 
 
 ################################
@@ -287,7 +287,6 @@ def locate_objects_by_radec(ra, dec, radius_as=2):
     for filename in lightcurve_filenames:
         if not _is_radec_in_lightcurveFile(filename, ra, dec):
             continue
-        print(filename)
 
         lightcurveFile = LightcurveFile(filename)
         objects_lightcurve = lightcurveFile.locate_objects_by_radec(ra, dec,
