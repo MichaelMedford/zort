@@ -12,40 +12,86 @@ import os
 import numpy as np
 
 
-# statically stored to save computation
-# calculated with +- 10 degrees from poles
-# can be re-generated with `generate_pole_field_ids`
-POLE_FIELD_IDS = set([1,   33,   55,   56,   84,   85,  119,  120,  156,
-                      157,  198, 199,  200,  244,  245,  246,  293,  294,
-                      295,  344,  345,  394, 395,  396,  397,  446,  447,
-                      497,  498,  499,  500,  549,  550, 551,  599,  600,
-                      601,  647,  648,  649,  693,  694,  735,  736, 772,
-                      773,  805,  806,  832,  833,  853,  878,  880, 1015,
-                      1041, 1061, 1062, 1087, 1088, 1119, 1154, 1155, 1156,
-                      1195, 1196, 1238, 1239, 1240, 1286, 1287, 1335, 1336,
-                      1337, 1387, 1388, 1389, 1390, 1440, 1441, 1491, 1492,
-                      1493, 1494, 1544, 1545, 1546, 1595, 1596, 1597, 1644,
-                      1645, 1646, 1691, 1692, 1734, 1735, 1773, 1774, 1808,
-                      1809, 1838, 1839, 1862, 1880, 1881])
+SHIFT_LOW_FIELD_IDS = set([1, 2, 5, 16, 33, 56, 85, 119, 157,
+                           199, 245, 294, 396, 499, 550, 600,
+                           648, 694, 736, 773, 806, 833, 854,
+                           869, 878, 879, 880, 881, 1001, 1002,
+                           1008, 1009, 1015, 1028, 1042, 1062,
+                           1088, 1119, 1155, 1389, 1493, 1545,
+                           1596, 1645, 1692, 1774, 1809, 1839,
+                           1863, 1881, 1894, 1896])
+
+SHIFT_HIGH_FIELD_IDS = set([4, 15, 32, 55, 84, 198, 395, 498,
+                            735, 805, 832, 853, 868, 877, 1006,
+                            1007, 1014, 1027, 1041, 1061, 1087,
+                            1154, 1239, 1286, 1336, 1388, 1492,
+                            1734, 1773, 1838, 1862, 1880, 1893,
+                            1895, 1897])
 
 
-def generate_pole_field_ids():
+def calculate_shift_low_and_high_field_ids():
     ZTF_fields = load_ZTF_fields()
-    ra = ZTF_fields['ra']
-    cond = (ra <= 10) + (ra >= (360 - 10))
-    return ZTF_fields['id'][cond]
+
+    here = os.path.abspath(os.path.dirname(__file__))
+    ZTF_CCD_layout_fname = '%s/data/ZTF_CCD_Layout.tbl' % here
+    with open(ZTF_CCD_layout_fname, 'r') as f:
+        lines = f.readlines()
+
+    shift_low_field_ids = []
+    shift_high_field_ids = []
+
+    for ZTF_field in ZTF_fields:
+        field_id = ZTF_field['id']
+        field_ra = ZTF_field['ra']
+        field_dec = ZTF_field['dec']
+
+        wcs = WCS({'CTYPE1': 'RA---TAN',
+                   'CTYPE2': 'DEC--TAN',
+                   'CRPIX1': 0,
+                   'CRPIX2': 0,
+                   'CRVAL1': field_ra,
+                   'CRVAL2': field_dec,
+                   'CUNIT1': 'deg',
+                   'CUNIT2': 'deg',
+                   'CD1_1': 1,
+                   'CD1_2': 0,
+                   'CD2_1': 0,
+                   'CD2_2': 1})
+
+        shift_high = False
+        shift_low = False
+        for line in lines[1:]:
+            ra_offset, dec_offset, chip = line.split()
+            ra_offset, dec_offset = -float(ra_offset), float(dec_offset)
+            ra_corner, dec_corner = wcs.all_pix2world(ra_offset, dec_offset, 1)
+
+            if ra_offset > 0 and ra_corner < field_ra:
+                shift_high = True
+            elif ra_offset < 0 and ra_corner > field_ra:
+                shift_low = True
+
+        assert not (shift_high and shift_low)
+
+        if shift_low:
+            shift_low_field_ids.append(field_id)
+        elif shift_high:
+            shift_high_field_ids.append(field_id)
+
+    return shift_low_field_ids, shift_high_field_ids
 
 
-def field_is_pole(field_id):
-    return field_id in POLE_FIELD_IDS
-
-
-def lightcurve_file_is_pole(lightcurve_file):
-    field = int(lightcurve_file.split('_')[0].replace('field', ''))
-    return field_is_pole(field)
+def return_shifted_ra(ra, field_id):
+    if field_id in SHIFT_LOW_FIELD_IDS and ra > 180:
+        ra_final = ra - 360
+    elif field_id in SHIFT_HIGH_FIELD_IDS and ra < 180:
+        ra_final = ra + 360
+    else:
+        ra_final = ra
+    return ra_final
 
 
 def load_ZTF_CCD_corners(field_id):
+
     ZTF_fields = load_ZTF_fields()
     ZTF_field = ZTF_fields[ZTF_fields['id'] == field_id]
     field_ra, field_dec = ZTF_field['ra'][0], ZTF_field['dec'][0]
@@ -68,16 +114,22 @@ def load_ZTF_CCD_corners(field_id):
     with open(ZTF_CCD_layout_fname, 'r') as f:
         lines = f.readlines()
 
-    is_pole = field_is_pole(field_id)
-
+    shift_high = False
+    shift_low = False
     ZTF_CCD_corners = {}
     for line in lines[1:]:
         ra_offset, dec_offset, chip = line.split()
         ra_offset, dec_offset = -float(ra_offset), float(dec_offset)
         chip = int(chip)
         ra_corner, dec_corner = wcs.all_pix2world(ra_offset, dec_offset, 1)
-        if is_pole and ra_corner > 180:
+
+        if ra_offset > 0 and ra_corner < field_ra:
+            ra_corner += 360
+            shift_high = True
+        elif ra_offset < 0 and ra_corner > field_ra:
             ra_corner -= 360
+            shift_low = True
+
         if chip not in ZTF_CCD_corners.keys():
             ZTF_CCD_corners[chip] = [[ra_corner, dec_corner]]
         else:
@@ -86,10 +138,12 @@ def load_ZTF_CCD_corners(field_id):
     for i in range(1, 17):
         ZTF_CCD_corners[i] = np.array(ZTF_CCD_corners[i])
 
+    assert not (shift_high and shift_low)
+
     return ZTF_CCD_corners
 
 
-def _calculate_two_point_midpoint(ra0, dec0, ra1, dec1, field_id=None):
+def _calculate_two_point_midpoint(ra0, dec0, ra1, dec1, field_id):
     coord1 = SkyCoord(ra0 * u.deg, dec0 * u.deg, frame='icrs')
     coord2 = SkyCoord(ra1 * u.deg, dec1 * u.deg, frame='icrs')
     pa = coord1.position_angle(coord2)
@@ -97,9 +151,9 @@ def _calculate_two_point_midpoint(ra0, dec0, ra1, dec1, field_id=None):
     midpoint = coord1.directional_offset_by(pa, sep / 2)
 
     ra, dec = midpoint.ra.value, midpoint.dec.value
-    if field_id and field_is_pole(field_id) and ra > 180:
-        ra -= 360
-    return ra, dec
+    ra_midpoint = return_shifted_ra(ra, field_id)
+
+    return [ra_midpoint, dec]
 
 
 def return_ZTF_RCID_corners(field_id):
@@ -127,6 +181,7 @@ def return_ZTF_RCID_corners(field_id):
         CCD_midpoint = _calculate_two_point_midpoint(*left_midpoint,
                                                      *right_midpoint,
                                                      field_id)
+
 
         for quad in np.arange(4):
             if quad == 0:
@@ -170,15 +225,15 @@ def load_ZTF_fields():
 
 
 def test_within_CCD_corners(ra, dec, ZTF_CCD_corners):
-    lower_right = ZTF_CCD_corners[1][0]
-    lower_left = ZTF_CCD_corners[4][3]
-    upper_right = ZTF_CCD_corners[13][1]
-    upper_left = ZTF_CCD_corners[16][2]
+    dec_min_ra_max = ZTF_CCD_corners[1][0]
+    dec_min_ra_min = ZTF_CCD_corners[4][3]
+    dec_max_ra_min = ZTF_CCD_corners[16][2]
+    dec_max_ra_max = ZTF_CCD_corners[13][1]
 
-    polygon = Polygon([lower_right,
-                       lower_left,
-                       upper_left,
-                       upper_right])
+    polygon = Polygon([dec_min_ra_max,
+                       dec_min_ra_min,
+                       dec_max_ra_min,
+                       dec_max_ra_max])
     point = Point(ra, dec)
     return polygon.contains(point)
 
@@ -190,33 +245,36 @@ def return_fields(ra, dec):
         field_id, field_ra, field_dec = ZTF_field['id'], \
                                         ZTF_field['ra'], \
                                         ZTF_field['dec']
-        ZTF_CCD_corners = load_ZTF_CCD_corners(field_id, field_ra, field_dec)
-        if test_within_CCD_corners(ra, dec, ZTF_CCD_corners):
+        ZTF_CCD_corners = load_ZTF_CCD_corners(field_id)
+        ra_test = return_shifted_ra(ra, field_id)
+
+        if test_within_CCD_corners(ra_test, dec, ZTF_CCD_corners):
             fields.append(ZTF_field['id'])
 
     return fields
 
 
 def test_within_RCID_corners(ra, dec, ZTF_RCID_corners_single):
-    lower_right = ZTF_RCID_corners_single[3]
-    lower_left = ZTF_RCID_corners_single[2]
-    upper_right = ZTF_RCID_corners_single[0]
-    upper_left = ZTF_RCID_corners_single[1]
+    dec_min_ra_max = ZTF_RCID_corners_single[3]
+    dec_min_ra_min = ZTF_RCID_corners_single[2]
+    dec_max_ra_min = ZTF_RCID_corners_single[1]
+    dec_max_ra_max = ZTF_RCID_corners_single[0]
 
-    polygon = Polygon([lower_right,
-                       lower_left,
-                       upper_left,
-                       upper_right])
+    polygon = Polygon([dec_min_ra_max,
+                       dec_min_ra_min,
+                       dec_max_ra_min,
+                       dec_max_ra_max])
     point = Point(ra, dec)
     return polygon.contains(point)
 
 
 def return_rcid(field_id, ra, dec):
     ZTF_RCID_corners = return_ZTF_RCID_corners(field_id)
+    ra_test = return_shifted_ra(ra, field_id)
 
     for rcid in range(64):
         ZTF_RCID_corners_single = ZTF_RCID_corners[rcid]
-        if test_within_RCID_corners(ra, dec, ZTF_RCID_corners_single):
+        if test_within_RCID_corners(ra_test, dec, ZTF_RCID_corners_single):
             return rcid
 
     return None
