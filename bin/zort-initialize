@@ -47,8 +47,6 @@ def main():
         size = 1
 
     lightcurve_files = glob.glob('field*.txt')
-    lightcurve_files = [f for f in lightcurve_files
-                        if not os.path.exists(f.replace('.txt', '.radec_map'))]
     lightcurve_files.sort()
 
     if rank == 0:
