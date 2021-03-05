@@ -14,7 +14,7 @@ from zort.radec import return_shifted_ra
 
 
 def generate_objects_file(lightcurve_file):
-    objects_file = lightcurve_file.replace('.txt', '.objects_map')
+    objects_file = lightcurve_file.replace('.txt', '.objects')
     if os.path.exists(objects_file):
         print('%s already exists. Skipping.' % objects_file)
         return
@@ -47,7 +47,8 @@ def generate_objects_file(lightcurve_file):
 
     f_in.close()
 
-    with open(objects_file, 'wb') as fileObj:
+    objects_map_file = lightcurve_file.replace('.txt', '.objects_map')
+    with open(objects_map_file, 'wb') as fileObj:
         pickle.dump(object_map, fileObj)
 
 
