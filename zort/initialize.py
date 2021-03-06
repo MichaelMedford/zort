@@ -15,8 +15,10 @@ from zort.radec import return_shifted_ra
 
 def generate_objects_file(lightcurve_file):
     objects_file = lightcurve_file.replace('.txt', '.objects')
-    if os.path.exists(objects_file):
-        print('%s already exists. Skipping.' % objects_file)
+    objects_map_file = lightcurve_file.replace('.txt', '.objects_map')
+
+    if os.path.exists(objects_file) and os.path.exists(objects_map_file):
+        print('%s and %s already exists. Skipping.' % (objects_file, objects_map_file))
         return
 
     f_in = open(lightcurve_file, 'r')
@@ -47,7 +49,6 @@ def generate_objects_file(lightcurve_file):
 
     f_in.close()
 
-    objects_map_file = lightcurve_file.replace('.txt', '.objects_map')
     with open(objects_map_file, 'wb') as fileObj:
         pickle.dump(object_map, fileObj)
 
@@ -83,13 +84,10 @@ def return_radec_map_filesize(radec_map):
 
 def generate_radec_rcid_maps(lightcurve_file):
     radec_map_file = lightcurve_file.replace('.txt', '.radec_map')
-    if os.path.exists(radec_map_file):
-        print('%s already exists. Skipping.' % radec_map_file)
-        return
-
     rcid_map_file = lightcurve_file.replace('.txt', '.rcid_map')
-    if os.path.exists(rcid_map_file):
-        print('%s already exists. Skipping.' % rcid_map_file)
+
+    if os.path.exists(radec_map_file) and os.path.exists(rcid_map_file):
+        print('%s and already exists. Skipping.' % (radec_map_file, rcid_map_file))
         return
 
     objects_file = lightcurve_file.replace('.txt', '.objects')
