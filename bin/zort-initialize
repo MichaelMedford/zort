@@ -49,13 +49,26 @@ def main():
     lightcurve_files = glob.glob('field*.txt')
     lightcurve_files.sort()
 
-    if rank == 0:
-        print('Generating object files, object maps and rcid maps '
-              'for %i lightcurve files' % len(lightcurve_files))
+    lightcurve_files_for_objects = [f for f in lightcurve_files
+                                    if not(os.path.exists(f.replace('.txt', '.objects_map')))]
 
-    my_lightcurve_files = np.array_split(lightcurve_files, size)[rank]
+    if rank == 0:
+        print('Generating object files, object maps '
+              'for %i lightcurve files' % len(lightcurve_files_for_objects))
+
+    my_lightcurve_files = np.array_split(lightcurve_files_for_objects, size)[rank]
     for lightcurve_file in my_lightcurve_files:
         generate_objects_file(lightcurve_file)
+
+    lightcurve_files_for_rcid = [f for f in lightcurve_files
+                                 if not(os.path.exists(f.replace('.txt', '.rcid_map')))]
+
+    if rank == 0:
+        print('Generating rcid maps '
+              'for %i lightcurve files' % len(lightcurve_files_for_rcid))
+
+    my_lightcurve_files = np.array_split(lightcurve_files_for_rcid, size)[rank]
+    for lightcurve_file in my_lightcurve_files:
         generate_radec_rcid_maps(lightcurve_file)
 
 
