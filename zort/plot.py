@@ -7,13 +7,26 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from zort.fit import return_mag_model
 
 
-def _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius):
+def _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius,
+               model_params=None):
     if object.color == 'i':
         color = 'k'
     else:
         color = object.color
+
+    if model_params:
+        t0 = model_params['t_0']
+        t_eff = model_params['t_E']
+        a_type = model_params['a_type']
+        f0 = model_params['f_0']
+        f1 = model_params['f_1']
+        t_fit = np.linspace(hmjd_min, hmjd_max, 100)
+        mag_model = return_mag_model(t_fit, t0, t_eff, a_type, f0, f1)
+        for a in ax:
+            a.plot(t_fit, mag_model, color='k', alpha=.3)
 
     ax[0].errorbar(object.lightcurve.hmjd, object.lightcurve.mag,
                    yerr=object.lightcurve.magerr,
@@ -42,14 +55,15 @@ def _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius):
     ax[1].set_title('%i Days Around Peak' % insert_radius)
 
 
-def plot_object(filename, object, insert_radius=30):
+def plot_object(filename, object, insert_radius=30, model_params=None):
     hmjd_min = np.min(object.lightcurve.hmjd) - 10
     hmjd_max = np.max(object.lightcurve.hmjd) + 10
 
     fig, ax = plt.subplots(1, 2, figsize=(12, 4))
     fig.subplots_adjust(hspace=0.4)
 
-    _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius)
+    _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius,
+               model_params=model_params)
 
     fig.savefig(filename, dpi=300, bbox_inches='tight', pad_inches=0.05)
     print('---- Lightcurve saved: %s' % filename)
@@ -57,7 +71,8 @@ def plot_object(filename, object, insert_radius=30):
 
 
 def plot_objects(filename, object_g=None, object_r=None,
-                 object_i=None, insert_radius=30):
+                 object_i=None, insert_radius=30,
+                 model_params=None, model_color=None):
     if object_g is None and object_r is None and object_i is None:
         raise Exception('At least one object must be set to generate lightcurves.')
 
@@ -82,7 +97,12 @@ def plot_objects(filename, object_g=None, object_r=None,
     fig.subplots_adjust(hspace=0.4)
 
     for i, object in enumerate(objects):
-        _plot_axis(ax[i], object, hmjd_min, hmjd_max, insert_radius)
+        if model_color and object.color == model_color:
+            object_model_params = model_params
+        else:
+            object_model_params = None
+        _plot_axis(ax[i], object, hmjd_min, hmjd_max, insert_radius,
+                   model_params=object_model_params)
 
     fig.savefig(filename, dpi=300, bbox_inches='tight', pad_inches=0.05)
     print('---- Lightcurves saved: %s' % filename)

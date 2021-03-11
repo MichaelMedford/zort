@@ -9,7 +9,6 @@ locate_siblings function.
 """
 import os
 import pickle
-import numpy as np
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 
@@ -226,14 +225,15 @@ class Object:
 
         self.set_siblings(siblings_object_ids, printFlag)
 
-    def plot_lightcurve(self, filename=None, insert_radius=30):
+    def plot_lightcurve(self, filename=None, insert_radius=30, model_params=None):
         if filename is None:
             filename = 'field%06d_%i_lc.png' % (self.fieldid, self.object_id)
 
         plot_object(filename=filename, object=self,
-                    insert_radius=insert_radius)
+                    insert_radius=insert_radius, model_params=model_params)
 
-    def plot_lightcurves(self, filename=None, insert_radius=30):
+    def plot_lightcurves(self, filename=None, insert_radius=30,
+                         model_params=None, model_color=None):
         if self.siblings is None:
             self.locate_siblings()
 
@@ -249,7 +249,9 @@ class Object:
                      object_g=source_dict['g'],
                      object_r=source_dict['r'],
                      object_i=source_dict['i'],
-                     insert_radius=insert_radius)
+                     insert_radius=insert_radius,
+                     model_params=model_params,
+                     model_color=model_color)
 
 
 def save_objects(filename, objects, overwrite=False):
