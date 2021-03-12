@@ -23,7 +23,7 @@ def _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius,
         a_type = model_params['a_type']
         f0 = model_params['f_0']
         f1 = model_params['f_1']
-        t_fit = np.linspace(hmjd_min, hmjd_max, 100)
+        t_fit = np.linspace(hmjd_min, hmjd_max, 1000)
         mag_model = return_mag_model(t_fit, t0, t_eff, a_type, f0, f1)
         for a in ax:
             a.plot(t_fit, mag_model, color='k', alpha=.3)
