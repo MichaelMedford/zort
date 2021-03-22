@@ -4,17 +4,35 @@ __setup__.py
 Inspired by: https://github.com/pypa/sampleproject
 """
 
+from setuptools import setup, find_packages
+from os import path
+import codecs
+import os.path
+
+
+def read(rel_path):
+    here = os.path.abspath(os.path.dirname(__file__))
+    with codecs.open(os.path.join(here, rel_path), 'r') as fp:
+        return fp.read()
+
+
+def get_version(rel_path):
+    for line in read(rel_path).splitlines():
+        if line.startswith('__version__'):
+            delim = '"' if '"' in line else "'"
+            return line.split(delim)[1]
+    else:
+        raise RuntimeError("Unable to find version string.")
+
+
 DESCRIPTION = "Reader for lightcurves from the ZTF Public Data Release"
 DISTNAME = 'zort'
 AUTHOR = 'Michael Medford'
 AUTHOR_EMAIL = 'michaelmedford@berkeley.edu'
 URL = 'https://github.com/MichaelMedford/zort'
 LICENSE = 'MIT'
-VERSION = open('VERSION').readline().strip()
+VERSION = get_version('zort/__init__.py')
 DOWNLOAD_URL = 'https://github.com/MichaelMedford/zort/tarball/%s' % VERSION
-
-from setuptools import setup, find_packages
-from os import path
 
 # Get the long description from the README file
 here = path.abspath(path.dirname(__file__))
