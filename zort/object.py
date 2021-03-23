@@ -233,7 +233,7 @@ class Object:
                     insert_radius=insert_radius, model_params=model_params)
 
     def plot_lightcurves(self, filename=None, insert_radius=30,
-                         model_params=None, model_color=None):
+                         model_params=None):
         if self.siblings is None:
             self.locate_siblings()
 
@@ -250,8 +250,7 @@ class Object:
                      object_r=source_dict['r'],
                      object_i=source_dict['i'],
                      insert_radius=insert_radius,
-                     model_params=model_params,
-                     model_color=model_color)
+                     model_params=model_params)
 
 
 def save_objects(filename, objects, overwrite=False):

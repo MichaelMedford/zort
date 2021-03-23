@@ -11,18 +11,18 @@ from zort.fit import return_mag_model
 
 
 def _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius,
-               model_params=None):
+               object_model_params=None):
     if object.color == 'i':
         color = 'k'
     else:
         color = object.color
 
-    if model_params:
-        t0 = model_params['t_0']
-        t_eff = model_params['t_E']
-        a_type = model_params['a_type']
-        f0 = model_params['f_0']
-        f1 = model_params['f_1']
+    if object_model_params:
+        t0 = object_model_params['t_0']
+        t_eff = object_model_params['t_E']
+        a_type = object_model_params['a_type']
+        f0 = object_model_params['f_0']
+        f1 = object_model_params['f_1']
         t_fit = np.linspace(hmjd_min-insert_radius, hmjd_max+insert_radius, 1000)
         mag_model = return_mag_model(t_fit, t0, t_eff, a_type, f0, f1)
         for a in ax:
@@ -72,7 +72,7 @@ def plot_object(filename, object, insert_radius=30, model_params=None):
 
 def plot_objects(filename, object_g=None, object_r=None,
                  object_i=None, insert_radius=30,
-                 model_params=None, model_color=None):
+                 model_params=None):
     if object_g is None and object_r is None and object_i is None:
         raise Exception('At least one object must be set to generate lightcurves.')
 
@@ -97,12 +97,12 @@ def plot_objects(filename, object_g=None, object_r=None,
     fig.subplots_adjust(hspace=0.4)
 
     for i, object in enumerate(objects):
-        if model_color and object.color == model_color:
-            object_model_params = model_params
+        if object.color in model_params:
+            object_model_params = model_params[object.color]
         else:
             object_model_params = None
         _plot_axis(ax[i], object, hmjd_min, hmjd_max, insert_radius,
-                   model_params=object_model_params)
+                   object_model_params=object_model_params)
 
     fig.savefig(filename, dpi=300, bbox_inches='tight', pad_inches=0.05)
     print('---- Lightcurves saved: %s' % filename)

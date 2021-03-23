@@ -186,7 +186,7 @@ class Source:
         return radec_map
 
     def plot_lightcurves(self, filename=None, insert_radius=30,
-                         model_params=None, model_color=None):
+                         model_params=None):
         if filename is None:
             object_ids = '_'.join([str(obj.object_id) for obj in self.objects
                                    if obj is not None])
@@ -198,8 +198,7 @@ class Source:
                      object_r=self.object_r,
                      object_i=self.object_i,
                      insert_radius=insert_radius,
-                     model_params=model_params,
-                     model_color=model_color)
+                     model_params=model_params)
 
 
 def create_source_from_object(object, locate_siblings=True, radius_as=2, skip_filterids=None):
