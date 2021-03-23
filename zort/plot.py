@@ -25,6 +25,8 @@ def _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius,
         f1 = model_params['f_1']
         t_fit = np.linspace(hmjd_min, hmjd_max, 1000)
         mag_model = return_mag_model(t_fit, t0, t_eff, a_type, f0, f1)
+        print(np.min(t_fit), np.max(t_fit))
+        print(np.min(mag_model), np.max(mag_model))
         for a in ax:
             a.plot(t_fit, mag_model, color='k', alpha=.3)
 
@@ -62,6 +64,7 @@ def plot_object(filename, object, insert_radius=30, model_params=None):
     fig, ax = plt.subplots(1, 2, figsize=(12, 4))
     fig.subplots_adjust(hspace=0.4)
 
+    print(f'model_params: {model_params}')
     _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius,
                model_params=model_params)
 
