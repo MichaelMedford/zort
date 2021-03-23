@@ -79,15 +79,19 @@ def plot_objects(filename, object_g=None, object_r=None,
     objects = [object_g, object_r, object_i]
     objects = [obj for obj in objects if obj is not None]
 
+    print('plot_objects')
     if len(objects) == 1:
+        print('plotting one object')
         plot_object(filename, objects[0], model_params=model_params)
         return
     elif len(objects) == 2:
         N_rows = 2
         figsize_height = 6
+        print('plotting two objects')
     else:
         N_rows = 3
         figsize_height = 9
+        print('plotting three objects')
 
     hmjd_min = min([o.lightcurve.hmjd.min() for o in objects]) - 10
     hmjd_max = max([o.lightcurve.hmjd.max() for o in objects]) + 10
@@ -97,6 +101,7 @@ def plot_objects(filename, object_g=None, object_r=None,
     fig.subplots_adjust(hspace=0.4)
 
     for i, object in enumerate(objects):
+        print(object.color, model_color)
         if model_color and object.color == model_color:
             object_model_params = model_params
         else:

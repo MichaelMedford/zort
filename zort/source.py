@@ -192,7 +192,7 @@ class Source:
                                    if obj is not None])
             filename = '%s_%s.png' % (self.filename.replace('.txt', ''),
                                       object_ids)
-
+        print('plot_lightcurves from source')
         plot_objects(filename=filename,
                      object_g=self.object_g,
                      object_r=self.object_r,
