@@ -23,10 +23,8 @@ def _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius,
         a_type = model_params['a_type']
         f0 = model_params['f_0']
         f1 = model_params['f_1']
-        t_fit = np.linspace(hmjd_min, hmjd_max, 1000)
+        t_fit = np.linspace(hmjd_min-insert_radius, hmjd_max+insert_radius, 1000)
         mag_model = return_mag_model(t_fit, t0, t_eff, a_type, f0, f1)
-        print(np.min(t_fit), np.max(t_fit))
-        print(np.min(mag_model), np.max(mag_model))
         for a in ax:
             a.plot(t_fit, mag_model, color='k', alpha=.3)
 
@@ -64,7 +62,6 @@ def plot_object(filename, object, insert_radius=30, model_params=None):
     fig, ax = plt.subplots(1, 2, figsize=(12, 4))
     fig.subplots_adjust(hspace=0.4)
 
-    print(f'model_params: {model_params}')
     _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius,
                model_params=model_params)
 
@@ -82,19 +79,15 @@ def plot_objects(filename, object_g=None, object_r=None,
     objects = [object_g, object_r, object_i]
     objects = [obj for obj in objects if obj is not None]
 
-    print('plot_objects')
     if len(objects) == 1:
-        print('plotting one object')
         plot_object(filename, objects[0], model_params=model_params)
         return
     elif len(objects) == 2:
         N_rows = 2
         figsize_height = 6
-        print('plotting two objects')
     else:
         N_rows = 3
         figsize_height = 9
-        print('plotting three objects')
 
     hmjd_min = min([o.lightcurve.hmjd.min() for o in objects]) - 10
     hmjd_max = max([o.lightcurve.hmjd.max() for o in objects]) + 10
@@ -104,7 +97,6 @@ def plot_objects(filename, object_g=None, object_r=None,
     fig.subplots_adjust(hspace=0.4)
 
     for i, object in enumerate(objects):
-        print(object.color, model_color)
         if model_color and object.color == model_color:
             object_model_params = model_params
         else:
