@@ -80,7 +80,7 @@ def plot_objects(filename, object_g=None, object_r=None,
     objects = [obj for obj in objects if obj is not None]
 
     if len(objects) == 1:
-        plot_object(filename, objects[0])
+        plot_object(filename, objects[0], model_params=model_params)
         return
     elif len(objects) == 2:
         N_rows = 2
