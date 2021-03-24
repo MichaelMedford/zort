@@ -63,7 +63,7 @@ def plot_object(filename, object, insert_radius=30, model_params=None):
     fig.subplots_adjust(hspace=0.4)
 
     _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius,
-               model_params=model_params)
+               object_model_params=model_params)
 
     fig.savefig(filename, dpi=300, bbox_inches='tight', pad_inches=0.05)
     print('---- Lightcurve saved: %s' % filename)
@@ -97,10 +97,10 @@ def plot_objects(filename, object_g=None, object_r=None,
     fig.subplots_adjust(hspace=0.4)
 
     for i, object in enumerate(objects):
-        if object.color in model_params:
-            object_model_params = model_params[object.color]
-        else:
+        if model_params is None or object.color not in model_params:
             object_model_params = None
+        else:
+            object_model_params = model_params[object.color]
         _plot_axis(ax[i], object, hmjd_min, hmjd_max, insert_radius,
                    object_model_params=object_model_params)
 
