@@ -53,6 +53,7 @@ def _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius,
     ax[1].set_ylabel('Magnitude')
     ax[1].set_xlabel('Observation Date')
     ax[1].set_title('%i Days Around Peak' % insert_radius)
+    ax[1].set_facecolor((.8, .8, .8, .35))
 
 
 def plot_object(filename, object, insert_radius=30, model_params=None):
