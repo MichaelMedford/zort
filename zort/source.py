@@ -35,7 +35,7 @@ class Source:
                  lightcurve_position_g=None,
                  lightcurve_position_r=None,
                  lightcurve_position_i=None,
-                 apply_catmask=False, PS_g_minus_r=0,
+                 apply_catmask=True, PS_g_minus_r=0,
                  objects_map=None,
                  radec_map=None):
         # Load filenames and check for existence
@@ -143,7 +143,8 @@ class Source:
         if lightcurve_position is not None:
             obj = Object(self.filename,
                          lightcurve_position=lightcurve_position,
-                         objects_map=self.objects_map)
+                         objects_map=self.objects_map,
+                         apply_catmask=self.apply_catmask)
         else:
             if self.objects_map is None:
                 self.objects_map = self.load_objects_map()

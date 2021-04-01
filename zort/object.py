@@ -35,7 +35,7 @@ class Object:
     """
 
     def __init__(self, filename, object_id=None, lightcurve_position=None,
-                 apply_catmask=False, PS_g_minus_r=0,
+                 apply_catmask=True, PS_g_minus_r=0,
                  objects_map=None, radec_map=None):
         # Check object_id and lightcurve_position
         if object_id is None and lightcurve_position is None:
