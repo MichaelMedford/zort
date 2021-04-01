@@ -35,7 +35,7 @@ class Source:
                  lightcurve_position_g=None,
                  lightcurve_position_r=None,
                  lightcurve_position_i=None,
-                 apply_catmask=False, PS_g_minus_r=0,
+                 apply_catmask=True, PS_g_minus_r=0,
                  objects_map=None,
                  radec_map=None):
         # Load filenames and check for existence
@@ -143,7 +143,8 @@ class Source:
         if lightcurve_position is not None:
             obj = Object(self.filename,
                          lightcurve_position=lightcurve_position,
-                         objects_map=self.objects_map)
+                         objects_map=self.objects_map,
+                         apply_catmask=self.apply_catmask)
         else:
             if self.objects_map is None:
                 self.objects_map = self.load_objects_map()
@@ -186,20 +187,19 @@ class Source:
         return radec_map
 
     def plot_lightcurves(self, filename=None, insert_radius=30,
-                         model_params=None, model_color=None):
+                         model_params=None):
         if filename is None:
             object_ids = '_'.join([str(obj.object_id) for obj in self.objects
                                    if obj is not None])
             filename = '%s_%s.png' % (self.filename.replace('.txt', ''),
                                       object_ids)
-
+        print('plot_lightcurves from source')
         plot_objects(filename=filename,
                      object_g=self.object_g,
                      object_r=self.object_r,
                      object_i=self.object_i,
                      insert_radius=insert_radius,
-                     model_params=model_params,
-                     model_color=model_color)
+                     model_params=model_params)
 
 
 def create_source_from_object(object, locate_siblings=True, radius_as=2, skip_filterids=None):

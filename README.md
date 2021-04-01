@@ -233,7 +233,12 @@ cand be generated using the ```obj.plot_lightcurves()``` method.
 ![](https://raw.githubusercontent.com/MichaelMedford/zort/master/example_images/field000245_ra357.03053to5.26702_dec-27.96964to-20.4773.txt-6852-lc-with_siblings.png)
 
 ## Requirements
-* Python 3.6
+* python 3.6
+* numpy
+* scipy
+* astropy
+* matplotlib
+* shapely
 
 ## Authors
 * Michael Medford <MichaelMedford@berkeley.edu>
