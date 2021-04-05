@@ -36,7 +36,7 @@ class Object:
 
     def __init__(self, filename, object_id=None, lightcurve_position=None,
                  apply_catmask=True, PS_g_minus_r=0,
-                 objects_map=None, radec_map=None):
+                 objects_map=None, radec_map=None, lightcurve_file_pointer=None):
         # Check object_id and lightcurve_position
         if object_id is None and lightcurve_position is None:
             raise Exception('ObjectID or lightcurve_position must be defined.')
@@ -57,6 +57,7 @@ class Object:
         elif lightcurve_position is not None:
             self.lightcurve_position = lightcurve_position
 
+        self.lightcurve_file_pointer = lightcurve_file_pointer
         params = self._load_params()
         self.object_id = params['object_id']
         self.nepochs = params['nepochs']
@@ -128,9 +129,15 @@ class Object:
     def glat(self):
         return self.glonlat[1]
 
+    @profile
     def _load_params(self):
         # Open lightcurve file
-        file = open(self.filename, 'r')
+        if self.lightcurve_file_pointer:
+            file = self.lightcurve_file_pointer
+            closeFlag = False
+        else:
+            file = open(self.filename, 'r')
+            closeFlag = True
 
         # Jump to the location of the object in the lightcurve file
         file.seek(self.lightcurve_position)
@@ -146,6 +153,11 @@ class Object:
         params_dict['rcid'] = int(params[4])
         params_dict['ra'] = float(params[5])
         params_dict['dec'] = float(params[6])
+
+        # close file
+        if closeFlag:
+            file.close()
+
         return params_dict
 
     def _return_filterid_color(self):

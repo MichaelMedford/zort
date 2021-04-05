@@ -37,7 +37,8 @@ class Source:
                  lightcurve_position_i=None,
                  apply_catmask=True, PS_g_minus_r=0,
                  objects_map=None,
-                 radec_map=None):
+                 radec_map=None,
+                 lightcurve_file_pointer=None):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
         self._objects_map_filename = None
@@ -59,6 +60,7 @@ class Source:
         else:
             self.radec_map = None
 
+        self.lightcurve_file_pointer = lightcurve_file_pointer
         objects = self._load_objects(object_id_g, object_id_r, object_id_i,
                                      lightcurve_position_g,
                                      lightcurve_position_r,
@@ -162,7 +164,8 @@ class Source:
                 self.objects_map = self.load_objects_map()
             obj = Object(self.filename,
                          object_id=object_id,
-                         objects_map=self.objects_map)
+                         objects_map=self.objects_map,
+                         lightcurve_file_pointer=self.lightcurve_file_pointer)
         if obj.color != color:
             str = "Color of 'object_id_{color}' is {color_obj}. " \
                   "Must be {color}.".format(color=color,
