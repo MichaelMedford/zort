@@ -129,7 +129,6 @@ class Object:
     def glat(self):
         return self.glonlat[1]
 
-    @profile
     def _load_params(self):
         # Open lightcurve file
         if self.lightcurve_file_pointer:

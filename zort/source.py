@@ -158,7 +158,8 @@ class Source:
             obj = Object(self.filename,
                          lightcurve_position=lightcurve_position,
                          objects_map=self.objects_map,
-                         apply_catmask=self.apply_catmask)
+                         apply_catmask=self.apply_catmask,
+                         lightcurve_file_pointer=self.lightcurve_file_pointer)
         else:
             if self.objects_map is None:
                 self.objects_map = self.load_objects_map()
