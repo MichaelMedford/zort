@@ -40,8 +40,8 @@ class Source:
                  radec_map=None):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
-        self.objects_map_filename = return_objects_map_filename(filename)
-        self.radec_map_filename = return_radec_map_filename(filename)
+        self._objects_map_filename = None
+        self._radec_map_filename = None
 
         self._check_initialization(object_id_g, object_id_r, object_id_i,
                                    lightcurve_position_g,
@@ -73,6 +73,18 @@ class Source:
         self.dec = radec[1]
 
         self._glonlat = None
+
+    @property
+    def objects_map_filename(self):
+        if self._objects_map_filename is None:
+            self._objects_map_filename = return_objects_map_filename(self.filename)
+        return self._objects_map_filename
+
+    @property
+    def radec_map_filename(self):
+        if self._radec_map_filename is None:
+            self._radec_map_filename = return_radec_map_filename(self.filename)
+        return self._radec_map_filename
 
     @property
     def glonlat(self):

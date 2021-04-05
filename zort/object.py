@@ -46,9 +46,6 @@ class Object:
 
         # Load filenames and check for existence
         self.filename = return_filename(filename)
-        self.objects_filename = return_objects_filename(filename)
-        self.objects_map_filename = return_objects_map_filename(filename)
-        self.radec_map_filename = return_radec_map_filename(filename)
 
         self.objects_map = None
         if object_id is not None:
@@ -94,6 +91,24 @@ class Object:
         title += 'Lightcurve Buffer Position: %i\n' % self.lightcurve_position
 
         return title
+
+    @property
+    def objects_filename(self):
+        if self._objects_filename is None:
+            self._objects_filename = return_objects_filename(self.filename)
+        return self._objects_filename
+
+    @property
+    def objects_map_filename(self):
+        if self._objects_map_filename is None:
+            self._objects_map_filename = return_objects_map_filename(self.filename)
+        return self._objects_map_filename
+
+    @property
+    def radec_map_filename(self):
+        if self._radec_map_filename is None:
+            self._radec_map_filename = return_radec_map_filename(self.filename)
+        return self._radec_map_filename
 
     @property
     def glonlat(self):
