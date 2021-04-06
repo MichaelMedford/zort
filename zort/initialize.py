@@ -87,7 +87,7 @@ def generate_radec_rcid_maps(lightcurve_file):
     rcid_map_file = lightcurve_file.replace('.txt', '.rcid_map')
 
     if os.path.exists(radec_map_file) and os.path.exists(rcid_map_file):
-        print('%s and already exists. Skipping.' % (radec_map_file, rcid_map_file))
+        print('%s and %s already exists. Skipping.' % (radec_map_file, rcid_map_file))
         return
 
     objects_file = lightcurve_file.replace('.txt', '.objects')
