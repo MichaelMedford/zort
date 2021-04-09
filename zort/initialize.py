@@ -128,7 +128,7 @@ def generate_radec_rcid_maps(lightcurve_file, overwrite=False):
             filterid_current = filterid
 
         # Check to see if the block has switched
-        if rcid != rcid_current:
+        if rcid != rcid_current or filterid != filterid_current:
             # set bounds of rcid
             rcid_map[filterid_current][rcid_current] = (
                 object_location_start, object_location_current)
