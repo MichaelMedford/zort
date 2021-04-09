@@ -91,6 +91,10 @@ def generate_radec_rcid_maps(lightcurve_file, overwrite=False):
         return
 
     objects_file = lightcurve_file.replace('.txt', '.objects')
+    if not os.path.exists(objects_file):
+        print('Objects file %s missing. '
+              'Cannot continue with generate_radec_rcid_maps.' % objects_file)
+        return
 
     f_in = open(objects_file, 'r')
     _ = f_in.readline()  # skip past the header
