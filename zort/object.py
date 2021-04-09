@@ -36,7 +36,7 @@ class Object:
 
     def __init__(self, filename, object_id=None, lightcurve_position=None,
                  apply_catmask=True, PS_g_minus_r=0,
-                 objects_map=None, radec_map=None):
+                 objects_map=None, radec_map=None, lightcurve_file_pointer=None):
         # Check object_id and lightcurve_position
         if object_id is None and lightcurve_position is None:
             raise Exception('ObjectID or lightcurve_position must be defined.')
@@ -46,9 +46,9 @@ class Object:
 
         # Load filenames and check for existence
         self.filename = return_filename(filename)
-        self.objects_filename = return_objects_filename(filename)
-        self.objects_map_filename = return_objects_map_filename(filename)
-        self.radec_map_filename = return_radec_map_filename(filename)
+        self._objects_filename = None
+        self._objects_map_filename = None
+        self._radec_map_filename = None
 
         self.objects_map = None
         if object_id is not None:
@@ -60,6 +60,7 @@ class Object:
         elif lightcurve_position is not None:
             self.lightcurve_position = lightcurve_position
 
+        self.lightcurve_file_pointer = lightcurve_file_pointer
         params = self._load_params()
         self.object_id = params['object_id']
         self.nepochs = params['nepochs']
@@ -96,6 +97,24 @@ class Object:
         return title
 
     @property
+    def objects_filename(self):
+        if self._objects_filename is None:
+            self._objects_filename = return_objects_filename(self.filename)
+        return self._objects_filename
+
+    @property
+    def objects_map_filename(self):
+        if self._objects_map_filename is None:
+            self._objects_map_filename = return_objects_map_filename(self.filename)
+        return self._objects_map_filename
+
+    @property
+    def radec_map_filename(self):
+        if self._radec_map_filename is None:
+            self._radec_map_filename = return_radec_map_filename(self.filename)
+        return self._radec_map_filename
+
+    @property
     def glonlat(self):
         if self._glonlat is None:
             coord = SkyCoord(self.ra, self.dec, unit=u.degree, frame='icrs')
@@ -115,7 +134,12 @@ class Object:
 
     def _load_params(self):
         # Open lightcurve file
-        file = open(self.filename, 'r')
+        if self.lightcurve_file_pointer:
+            file = self.lightcurve_file_pointer
+            closeFlag = False
+        else:
+            file = open(self.filename, 'r')
+            closeFlag = True
 
         # Jump to the location of the object in the lightcurve file
         file.seek(self.lightcurve_position)
@@ -131,6 +155,11 @@ class Object:
         params_dict['rcid'] = int(params[4])
         params_dict['ra'] = float(params[5])
         params_dict['dec'] = float(params[6])
+
+        # close file
+        if closeFlag:
+            file.close()
+
         return params_dict
 
     def _return_filterid_color(self):

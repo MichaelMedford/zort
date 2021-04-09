@@ -37,11 +37,12 @@ class Source:
                  lightcurve_position_i=None,
                  apply_catmask=True, PS_g_minus_r=0,
                  objects_map=None,
-                 radec_map=None):
+                 radec_map=None,
+                 lightcurve_file_pointer=None):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
-        self.objects_map_filename = return_objects_map_filename(filename)
-        self.radec_map_filename = return_radec_map_filename(filename)
+        self._objects_map_filename = None
+        self._radec_map_filename = None
 
         self._check_initialization(object_id_g, object_id_r, object_id_i,
                                    lightcurve_position_g,
@@ -59,6 +60,7 @@ class Source:
         else:
             self.radec_map = None
 
+        self.lightcurve_file_pointer = lightcurve_file_pointer
         objects = self._load_objects(object_id_g, object_id_r, object_id_i,
                                      lightcurve_position_g,
                                      lightcurve_position_r,
@@ -73,6 +75,18 @@ class Source:
         self.dec = radec[1]
 
         self._glonlat = None
+
+    @property
+    def objects_map_filename(self):
+        if self._objects_map_filename is None:
+            self._objects_map_filename = return_objects_map_filename(self.filename)
+        return self._objects_map_filename
+
+    @property
+    def radec_map_filename(self):
+        if self._radec_map_filename is None:
+            self._radec_map_filename = return_radec_map_filename(self.filename)
+        return self._radec_map_filename
 
     @property
     def glonlat(self):
@@ -144,13 +158,15 @@ class Source:
             obj = Object(self.filename,
                          lightcurve_position=lightcurve_position,
                          objects_map=self.objects_map,
-                         apply_catmask=self.apply_catmask)
+                         apply_catmask=self.apply_catmask,
+                         lightcurve_file_pointer=self.lightcurve_file_pointer)
         else:
             if self.objects_map is None:
                 self.objects_map = self.load_objects_map()
             obj = Object(self.filename,
                          object_id=object_id,
-                         objects_map=self.objects_map)
+                         objects_map=self.objects_map,
+                         lightcurve_file_pointer=self.lightcurve_file_pointer)
         if obj.color != color:
             str = "Color of 'object_id_{color}' is {color_obj}. " \
                   "Must be {color}.".format(color=color,

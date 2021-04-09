@@ -13,11 +13,11 @@ from scipy.spatial import cKDTree
 from zort.radec import return_shifted_ra
 
 
-def generate_objects_file(lightcurve_file):
+def generate_objects_file(lightcurve_file, overwrite=False):
     objects_file = lightcurve_file.replace('.txt', '.objects')
     objects_map_file = lightcurve_file.replace('.txt', '.objects_map')
 
-    if os.path.exists(objects_file) and os.path.exists(objects_map_file):
+    if not overwrite and os.path.exists(objects_file) and os.path.exists(objects_map_file):
         print('%s and %s already exists. Skipping.' % (objects_file, objects_map_file))
         return
 
@@ -82,15 +82,19 @@ def return_radec_map_filesize(radec_map):
     return radec_map_filesize
 
 
-def generate_radec_rcid_maps(lightcurve_file):
+def generate_radec_rcid_maps(lightcurve_file, overwrite=False):
     radec_map_file = lightcurve_file.replace('.txt', '.radec_map')
     rcid_map_file = lightcurve_file.replace('.txt', '.rcid_map')
 
-    if os.path.exists(radec_map_file) and os.path.exists(rcid_map_file):
-        print('%s and already exists. Skipping.' % (radec_map_file, rcid_map_file))
+    if not overwrite and os.path.exists(radec_map_file) and os.path.exists(rcid_map_file):
+        print('%s and %s already exists. Skipping.' % (radec_map_file, rcid_map_file))
         return
 
     objects_file = lightcurve_file.replace('.txt', '.objects')
+    if not os.path.exists(objects_file):
+        print('Objects file %s missing. '
+              'Cannot continue with generate_radec_rcid_maps.' % objects_file)
+        return
 
     f_in = open(objects_file, 'r')
     _ = f_in.readline()  # skip past the header
@@ -124,7 +128,7 @@ def generate_radec_rcid_maps(lightcurve_file):
             filterid_current = filterid
 
         # Check to see if the block has switched
-        if rcid != rcid_current:
+        if rcid != rcid_current or filterid != filterid_current:
             # set bounds of rcid
             rcid_map[filterid_current][rcid_current] = (
                 object_location_start, object_location_current)
