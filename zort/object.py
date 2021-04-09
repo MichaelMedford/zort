@@ -46,6 +46,9 @@ class Object:
 
         # Load filenames and check for existence
         self.filename = return_filename(filename)
+        self._objects_filename = None
+        self._objects_map_filename = None
+        self._radec_map_filename = None
 
         self.objects_map = None
         if object_id is not None:
