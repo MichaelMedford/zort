@@ -7,12 +7,11 @@ the current directory. These initialization files are required for using zort.
 
 import glob
 import argparse
-import os
 import sys
 import subprocess
-import numpy as np
 
 from zort.initialize import generate_objects_file, generate_radec_rcid_maps
+from zort.utils import sortsplit
 
 
 def main():
@@ -49,7 +48,7 @@ def main():
     lightcurve_files = glob.glob('field*ra*.txt')
     lightcurve_files.sort()
 
-    my_lightcurve_files = np.array_split(lightcurve_files, size)[rank]
+    my_lightcurve_files = sortsplit(lightcurve_files, size)[rank]
     for lightcurve_file in my_lightcurve_files:
         generate_objects_file(lightcurve_file)
         generate_radec_rcid_maps(lightcurve_file)
