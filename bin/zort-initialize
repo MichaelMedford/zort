@@ -46,7 +46,7 @@ def main():
         rank = 0
         size = 1
 
-    lightcurve_files = glob.glob('field*.txt')
+    lightcurve_files = glob.glob('field*ra*.txt')
     lightcurve_files.sort()
 
     lightcurve_files_for_objects = [f for f in lightcurve_files
