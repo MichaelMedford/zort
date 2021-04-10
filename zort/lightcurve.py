@@ -39,22 +39,62 @@ class Lightcurve:
         self.hmjd = data['hmjd']
         self.mag = data['mag']
         self.magerr = data['magerr']
-        flux, fluxerr = magnitudes_to_fluxes(self.mag, self.magerr)
-        self.flux = flux
-        self.fluxerr = fluxerr
         self.clrcoeff = data['clrcoeff']
         self.catflags = data['catflags']
         self.nepochs = int(len(self.mag))
-        self.mag_med = self._return_median(self.mag)
-        self.mag_std = self._return_std(self.mag)
-        self.flux_med = self._return_median(self.flux)
-        self.flux_std = self._return_std(self.flux)
+
+        self._flux_fluxerr = None
+        self._flux = None
+        self._fluxerr =None
+        self._mag_med = None
+        self._mag_std = None
+        self._flux_med = None
+        self._flux_std = None
 
     def __repr__(self):
         title = 'Object ID: %s\n' % self.object_id
         title += 'N_epochs: %i\n' % self.nepochs
 
         return title
+
+    @property
+    def flux_fluxerr(self):
+        if self._flux_fluxerr is None:
+            flux, fluxerr = magnitudes_to_fluxes(self.mag, self.magerr)
+            self._flux_fluxerr = flux, fluxerr
+        return self._flux_fluxerr
+
+    @property
+    def flux(self):
+        return self.flux_fluxerr[0]
+
+    @property
+    def fluxerr(self):
+        return self.flux_fluxerr[1]
+    
+    @property
+    def mag_med(self):
+        if self._mag_med is None:
+            self._mag_med = self._return_median(self.mag)
+        return self._mag_med
+    
+    @property
+    def mag_std(self):
+        if self._mag_std is None:
+            self._mag_std = self._return_std(self.mag)
+        return self._mag_std
+
+    @property
+    def flux_med(self):
+        if self._flux_med is None:
+            self._flux_med = self._return_median(self.flux)
+        return self._flux_med
+
+    @property
+    def flux_std(self):
+        if self._flux_std is None:
+            self._flux_std = self._return_std(self.flux)
+        return self._flux_std
 
     def _load_lightcurve(self, lightcurve_file_pointer=None):
         """
