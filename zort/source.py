@@ -10,11 +10,10 @@ import numpy as np
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 
-from zort.lightcurve import Lightcurve
 from zort.object import Object
 from zort.plot import plot_objects
 from zort.utils import return_filename, return_objects_map_filename, \
-    return_radec_map_filename, filterid_dict
+    return_radec_map_filename
 
 
 ################################
@@ -38,16 +37,18 @@ class Source:
                  apply_catmask=True, PS_g_minus_r=0,
                  objects_map=None,
                  radec_map=None,
-                 lightcurve_file_pointer=None):
+                 lightcurve_file_pointer=None,
+                 check_initialization=True):
         # Load filenames and check for existence
         self.filename = return_filename(filename)
         self._objects_map_filename = None
         self._radec_map_filename = None
 
-        self._check_initialization(object_id_g, object_id_r, object_id_i,
-                                   lightcurve_position_g,
-                                   lightcurve_position_r,
-                                   lightcurve_position_i)
+        if check_initialization:
+            self._check_initialization(object_id_g, object_id_r, object_id_i,
+                                       lightcurve_position_g,
+                                       lightcurve_position_r,
+                                       lightcurve_position_i)
 
         self.apply_catmask = apply_catmask
         self.PS_g_minus_r = PS_g_minus_r
@@ -70,10 +71,7 @@ class Source:
         self.object_i = objects[2]
         self.objects = [o for o in objects if o is not None]
 
-        radec = self._calculate_radec()
-        self.ra = radec[0]
-        self.dec = radec[1]
-
+        self._radec = None
         self._glonlat = None
 
     @property
@@ -87,6 +85,22 @@ class Source:
         if self._radec_map_filename is None:
             self._radec_map_filename = return_radec_map_filename(self.filename)
         return self._radec_map_filename
+
+    @property
+    def radec(self):
+        if self._radec is None:
+            ra = np.mean([obj.ra for obj in self.objects if obj is not None])
+            dec = np.mean([obj.dec for obj in self.objects if obj is not None])
+            self._radec = [ra, dec]
+        return self._radec
+
+    @property
+    def ra(self):
+        return self.radec[0]
+
+    @property
+    def dec(self):
+        return self.radec[1]
 
     @property
     def glonlat(self):
@@ -186,11 +200,6 @@ class Source:
                                      lightcurve_position=lightcurve_position_i,
                                      color='i')
         return object_g, object_r, object_i
-
-    def _calculate_radec(self):
-        ra = np.mean([obj.ra for obj in self.objects if obj is not None])
-        dec = np.mean([obj.dec for obj in self.objects if obj is not None])
-        return ra, dec
 
     def load_objects_map(self):
         objects_map_filename = self.objects_map_filename
