@@ -189,7 +189,8 @@ class Object:
     def _load_lightcurve(self):
         return Lightcurve(self.filename, self.lightcurve_position,
                           apply_catmask=self.apply_catmask,
-                          PS_g_minus_r=self.PS_g_minus_r)
+                          PS_g_minus_r=self.PS_g_minus_r,
+                          lightcurve_file_pointer=self.lightcurve_file_pointer)
 
     def set_siblings(self, sibling_object_ids, printFlag=False):
         # Assign the sibling to its own object instance
