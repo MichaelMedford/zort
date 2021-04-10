@@ -13,10 +13,11 @@ filterid_dict = {
 
 
 def return_filename(filename):
-    try:
-        filename = filename.decode()
-    except AttributeError:
-        pass
+    if type(filename) != str:
+        try:
+            filename = filename.decode()
+        except AttributeError:
+            pass
 
     if filename is None:
         raise FileNotFoundError(filename)
