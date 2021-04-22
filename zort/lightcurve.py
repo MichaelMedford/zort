@@ -142,6 +142,12 @@ class Lightcurve:
             mask = data['catflags'] >= 32768
             data = data[~mask]
 
+        # Remove points with bad values
+        mask = np.isnan(data['hmjd'])
+        mask += np.isnan(data['mag'])
+        mask += np.isnan(data['magerr'])
+        data = data[~mask]
+
         # Sort the observations by date
         cond = np.argsort(data['hmjd'])
         data = data[cond]
