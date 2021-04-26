@@ -9,7 +9,7 @@ import numpy as np
 
 def magnitudes_to_fluxes(mag, magerr=None, zero_point=22.0):
     flux = 10 ** ((zero_point - mag) / 2.5)
-    if magerr:
+    if magerr is not None:
         fluxerr = flux * magerr / 1.086
     else:
         fluxerr = None
@@ -18,7 +18,7 @@ def magnitudes_to_fluxes(mag, magerr=None, zero_point=22.0):
 
 def fluxes_to_magnitudes(flux, fluxerr=None, zero_point=22.0):
     mag = zero_point - 2.5 * np.log10(flux)
-    if fluxerr:
+    if fluxerr is not None:
         magerr = 1.086 * fluxerr / flux
     else:
         magerr = None
