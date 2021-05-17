@@ -265,7 +265,7 @@ class Object:
                     model_params=model_params, model=model)
 
     def plot_lightcurves(self, filename=None, insert_radius=30,
-                         model_params=None, model=None):
+                         model_params=None, model=None, hmjd_survey_bounds=False):
         if self.siblings is None:
             self.locate_siblings()
 
@@ -283,7 +283,8 @@ class Object:
                      object_i=source_dict['i'],
                      insert_radius=insert_radius,
                      model_params=model_params,
-                     model=model)
+                     model=model,
+                     hmjd_survey_bounds=hmjd_survey_bounds)
 
 
 def save_objects(filename, objects, overwrite=False):

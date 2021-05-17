@@ -61,9 +61,13 @@ def _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius,
 
 
 def plot_object(filename, object, insert_radius=30,
-                model_params=None, model=None):
-    hmjd_min = np.min(object.lightcurve.hmjd) - 10
-    hmjd_max = np.max(object.lightcurve.hmjd) + 10
+                model_params=None, model=None, hmjd_survey_bounds=False):
+    if hmjd_survey_bounds:
+        hmjd_min = 58194.0
+        hmjd_max = 59243.0
+    else:
+        hmjd_min = np.min(object.lightcurve.hmjd) - 10
+        hmjd_max = np.max(object.lightcurve.hmjd) + 10
 
     fig, ax = plt.subplots(1, 2, figsize=(12, 4))
     fig.subplots_adjust(hspace=0.4)
@@ -84,7 +88,7 @@ def plot_object(filename, object, insert_radius=30,
 
 def plot_objects(filename, object_g=None, object_r=None,
                  object_i=None, insert_radius=30,
-                 model_params=None, model=None):
+                 model_params=None, model=None, hmjd_survey_bounds=False):
     if object_g is None and object_r is None and object_i is None:
         raise Exception('At least one object must be set to generate lightcurves.')
 
@@ -93,7 +97,8 @@ def plot_objects(filename, object_g=None, object_r=None,
 
     if len(objects) == 1:
         plot_object(filename, objects[0],
-                    model_params=model_params, model=model)
+                    model_params=model_params, model=model,
+                    hmjd_survey_bounds=hmjd_survey_bounds)
         return
     elif len(objects) == 2:
         N_rows = 2
@@ -102,8 +107,12 @@ def plot_objects(filename, object_g=None, object_r=None,
         N_rows = 3
         figsize_height = 9
 
-    hmjd_min = min([o.lightcurve.hmjd.min() for o in objects]) - 10
-    hmjd_max = max([o.lightcurve.hmjd.max() for o in objects]) + 10
+    if hmjd_survey_bounds:
+        hmjd_min = 58194.0
+        hmjd_max = 59243.0
+    else:
+        hmjd_min = min([o.lightcurve.hmjd.min() for o in objects]) - 10
+        hmjd_max = max([o.lightcurve.hmjd.max() for o in objects]) + 10
 
     fig, ax = plt.subplots(N_rows, 2, figsize=(12, figsize_height))
     fig.subplots_adjust(top=0.92)
