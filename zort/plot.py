@@ -18,7 +18,7 @@ def _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius,
         color = object.color
 
     if object_model_params:
-        t_fit = np.linspace(hmjd_min - insert_radius, hmjd_max + insert_radius, 1000)
+        t_fit = np.linspace(hmjd_min - insert_radius, hmjd_max + insert_radius, 10000)
         if object_model:
             model = object_model(**object_model_params)
             mag_model = model.get_photometry(t_fit)
