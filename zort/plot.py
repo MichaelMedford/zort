@@ -60,7 +60,8 @@ def _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius,
     ax[1].set_facecolor((.8, .8, .8, .35))
 
 
-def plot_object(filename, object, insert_radius=30, model_params=None):
+def plot_object(filename, object, insert_radius=30,
+                model_params=None, model=None):
     hmjd_min = np.min(object.lightcurve.hmjd) - 10
     hmjd_max = np.max(object.lightcurve.hmjd) + 10
 
@@ -73,7 +74,8 @@ def plot_object(filename, object, insert_radius=30, model_params=None):
         object_model_params = model_params[object.color]
 
     _plot_axis(ax, object, hmjd_min, hmjd_max, insert_radius,
-               object_model_params=object_model_params)
+               object_model_params=object_model_params,
+               object_model=model)
 
     fig.savefig(filename, dpi=300, bbox_inches='tight', pad_inches=0.05)
     print('---- Lightcurve saved: %s' % filename)
@@ -90,7 +92,8 @@ def plot_objects(filename, object_g=None, object_r=None,
     objects = [obj for obj in objects if obj is not None]
 
     if len(objects) == 1:
-        plot_object(filename, objects[0], model_params=model_params)
+        plot_object(filename, objects[0],
+                    model_params=model_params, model=model)
         return
     elif len(objects) == 2:
         N_rows = 2
@@ -113,7 +116,7 @@ def plot_objects(filename, object_g=None, object_r=None,
             object_model_params = model_params[object.color]
         _plot_axis(ax[i], object, hmjd_min, hmjd_max, insert_radius,
                    object_model_params=object_model_params,
-                   model=model)
+                   object_model=model)
 
     fig.savefig(filename, dpi=300, bbox_inches='tight', pad_inches=0.05)
     print('---- Lightcurves saved: %s' % filename)
