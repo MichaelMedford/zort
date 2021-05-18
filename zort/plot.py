@@ -94,6 +94,7 @@ def plot_objects(filename, object_g=None, object_r=None,
 
     objects = [object_g, object_r, object_i]
     objects = [obj for obj in objects if obj is not None]
+    objects = [obj for obj in objects if obj.lightcurve.nepochs > 1]
 
     if len(objects) == 1:
         plot_object(filename, objects[0],
