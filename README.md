@@ -1,5 +1,7 @@
 # zort : ZTF Object Reader Tool
 
+<img src="https://github.com/MichaelMedford/zort/raw/master/figures/zort_logo.png" width="400" />
+
 ## Getting Started
 
 The ZTF Object Reader Tool, ```zort```, is a set of functions to organize and 
