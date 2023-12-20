@@ -2,7 +2,7 @@
 
 ## Getting Started
 
-The ZTF Object Reader Tool, ```zort```, is set of functions to organize and 
+The ZTF Object Reader Tool, ```zort```, is a set of functions to organize and 
 access the ZTF Public Data Release lightcurves across multiple colors. 
 
 ### ZTF Public Data Release Lightcurves
